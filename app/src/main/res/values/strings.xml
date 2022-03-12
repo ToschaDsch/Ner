@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">Ner</string>
+    <string name="app_name" translatable="false">Ner</string>
+    <string name="length">length</string>
+    <string name="springs">springs</string>
 </resources>
