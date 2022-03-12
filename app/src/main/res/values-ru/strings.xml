@@ -2,4 +2,14 @@
 <resources>
     <string name="length">длина</string>
     <string name="springs">пружины</string>
+    <string name="fields">пролётф</string>
+    <string name="consoleAtThe">консоль в</string>
+    <string name="beginning">начале</string>
+    <string name="end">конце</string>
+    <string name="section">сечение</string>
+    <string name="fieldN">пролёт N</string>
+    <string name="distance">расстояние</string>
+    <string name="precision">точность</string>
+    <string name="save">сохранить</string>
+    <string name="drawACurve">график</string>
 </resources>

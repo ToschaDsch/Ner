@@ -2,5 +2,15 @@
 <resources>
     <string name="length">Lange</string>
     <string name="springs">Federn</string>
+    <string name="fields">Felder</string>
+    <string name="consoleAtThe">Konsole  am</string>
+    <string name="beginning">Anfang</string>
+    <string name="end">Ende</string>
+    <string name="section">Schnitt</string>
+    <string name="fieldN">Feld N</string>
+    <string name="distance">Abstand</string>
+    <string name="precision">Genauigkeit</string>
+    <string name="save">speichern</string>
+    <string name="drawACurve">Diagramm von</string>
 
 </resources>

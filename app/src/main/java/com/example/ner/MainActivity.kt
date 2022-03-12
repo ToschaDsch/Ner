@@ -18,10 +18,12 @@ import com.example.ner.databinding.ActivityMainBinding
 var widthOfApp: Int = 0
 var heightOfApp: Int = 0
 var widthOfAnElement: Int = 0
+var widthOfCheckBox: Int = 0
 var NumbersOfTextView: ArrayList<TextView> = ArrayList()
 var LengthsInput: ArrayList<EditText> = ArrayList()
 var EIInput: ArrayList<EditText> = ArrayList()
 var SpringInput: ArrayList<EditText> = ArrayList()
+var CheckBoxDrawCurve: ArrayList<RadioButton> = ArrayList()
 
 class MainActivity : AppCompatActivity() {
     lateinit var binding : ActivityMainBinding
@@ -42,6 +44,7 @@ class MainActivity : AppCompatActivity() {
         heightOfApp = Resources.getSystem().displayMetrics.heightPixels
         val dpScale = Resources.getSystem().displayMetrics.density
         widthOfAnElement = ((widthOfApp-20*dpScale)/12).toInt()
+        widthOfCheckBox = ((widthOfApp-30*dpScale)/14).toInt()
     }
 
 
@@ -61,6 +64,66 @@ class MainActivity : AppCompatActivity() {
             makeLengthsInput(i)
             makeEIInput(i)
             if (i<12) makeSpringInput(i)
+        }
+        for (i in 0..15) {
+            makeCheckBaxDrawCurve(i)
+        }
+    }
+
+
+    private fun makeCheckBaxDrawCurve(i: Int){
+        if (i==0) {
+            val nameDrawCurve = TextView(this)
+            // setting height and width
+            nameDrawCurve.layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            // setting text
+            nameDrawCurve.setText(R.string.drawACurve)
+            nameDrawCurve.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            nameDrawCurve.width = widthOfCheckBox
+            // Add EditText to LinearLayout
+            binding.LayoutDrawACurveMQd?.addView(nameDrawCurve)
+        } else {
+            CheckBoxDrawCurve.add(RadioButton(this))
+
+            // setting height and width
+            CheckBoxDrawCurve[i - 1].layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            // setting text
+            when (i-4){
+                -3 ->    {CheckBoxDrawCurve[i - 1].text = "M"
+                    // Add CheckBox to LinearLayout
+                    binding.LayoutDrawACurveMQd?.addView(CheckBoxDrawCurve[i - 1])
+                }
+                -2 ->    {CheckBoxDrawCurve[i - 1].text = "Q"
+                    // Add CheckBox to LinearLayout
+                    binding.LayoutDrawACurveMQd?.addView(CheckBoxDrawCurve[i - 1])
+                }
+                -1 ->    {CheckBoxDrawCurve[i - 1].text = "δ"
+                    // Add CheckBox to LinearLayout
+                    binding.LayoutDrawACurveMQd?.addView(CheckBoxDrawCurve[i - 1])
+                }
+                else ->  {CheckBoxDrawCurve[i - 1].text = "R"+ (i-4).toString()
+                    // Add CheckBox to LinearLayout
+                    binding.LayoutDrawACurveReaction?.addView(CheckBoxDrawCurve[i - 1])
+                }
+            }
+
+            CheckBoxDrawCurve[i - 1].textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            CheckBoxDrawCurve[i - 1].width = widthOfAnElement
+            // onClick the text a message will be displayed "HELLO GEEK"
+            CheckBoxDrawCurve[i - 1].setOnClickListener()
+            {
+                Toast.makeText(
+                    this@MainActivity, "HELLO GEEK LENGTH",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
         }
     }
 

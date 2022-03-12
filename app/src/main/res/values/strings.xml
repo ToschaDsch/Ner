@@ -2,4 +2,14 @@
     <string name="app_name" translatable="false">Ner</string>
     <string name="length">length</string>
     <string name="springs">springs</string>
+    <string name="fields">fields</string>
+    <string name="consoleAtThe">console at the</string>
+    <string name="beginning">beginning</string>
+    <string name="end">end</string>
+    <string name="section">section</string>
+    <string name="fieldN">field N</string>
+    <string name="distance">distance</string>
+    <string name="precision">precision</string>
+    <string name="save">save</string>
+    <string name="drawACurve">graph of</string>
 </resources>

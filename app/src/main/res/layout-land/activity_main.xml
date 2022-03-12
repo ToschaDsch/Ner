@@ -23,9 +23,9 @@
             app:srcCompat="@drawable/ic_launcher_background" />
 
         <LinearLayout
-            android:id="@+id/LayoutNumbers"
+            android:id="@+id/LayoutDrawACurveMQd"
             android:layout_width="match_parent"
-            android:layout_height="25dp"
+            android:layout_height="40dp"
             android:layout_marginStart="1dp"
             android:layout_marginTop="100dp"
             android:layout_marginEnd="1dp"
@@ -34,6 +34,32 @@
             app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/imageView" />
+
+        <LinearLayout
+            android:id="@+id/LayoutDrawACurveReaction"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginStart="1dp"
+            android:layout_marginTop="100dp"
+            android:layout_marginEnd="1dp"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imageView" />
+
+        <LinearLayout
+            android:id="@+id/LayoutNumbers"
+            android:layout_width="match_parent"
+            android:layout_height="25dp"
+            android:layout_marginStart="1dp"
+            android:layout_marginTop="1dp"
+            android:layout_marginEnd="1dp"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/LayoutDrawACurve" />
 
         <LinearLayout
             android:id="@+id/LayoutLength"
@@ -82,7 +108,7 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="659dp"
             android:layout_marginBottom="73dp"
-            android:text="fields"
+            android:text="@string/fields"
             app:layout_constraintBottom_toTopOf="@+id/LayoutNumders"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.12"
@@ -119,7 +145,7 @@
             android:layout_marginStart="43dp"
             android:layout_marginTop="5dp"
             android:layout_marginEnd="15dp"
-            android:text="console at the"
+            android:text="@string/consoleAtThe"
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@+id/textView7"
             app:layout_constraintHorizontal_bias="0.35"
@@ -131,7 +157,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="176dp"
-            android:text="beginning"
+            android:text="@string/beginning"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.138"
             app:layout_constraintStart_toStartOf="parent"
@@ -141,11 +167,11 @@
             android:id="@+id/checkBox2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="216dp"
-            android:text="end"
+            android:layout_marginTop="208dp"
+            android:text="@string/end"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.131"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="@+id/checkBox"
             app:layout_constraintTop_toTopOf="@+id/imageView" />
 
         <TextView
@@ -153,7 +179,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="216dp"
-            android:text="distance"
+            android:text="@string/distance"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.306"
             app:layout_constraintStart_toStartOf="parent"
@@ -178,7 +204,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="176dp"
-            android:text="field N"
+            android:text="@string/fieldN"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.319"
             app:layout_constraintStart_toStartOf="parent"
@@ -204,7 +230,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:layout_marginEnd="4dp"
-            android:text="section"
+            android:text="@string/section"
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@+id/editTextNumberSigned"
             app:layout_constraintHorizontal_bias="0.953"
@@ -216,7 +242,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="156dp"
-            android:text="precision"
+            android:text="@string/precision"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.769"
@@ -314,7 +340,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="184dp"
             android:layout_marginBottom="18dp"
-            android:text="save"
+            android:text="@string/save"
             app:layout_constraintBottom_toTopOf="@+id/LayoutNumders"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.975"
