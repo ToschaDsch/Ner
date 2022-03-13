@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Html
 import android.text.Spanned
+import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.core.view.WindowCompat
@@ -30,11 +31,14 @@ var ResultAreaPlus: ArrayList<TextView> = ArrayList()
 var ResultAreaMinus: ArrayList<TextView> = ArrayList()
 var ResultOrdinatePlus: ArrayList<TextView> = ArrayList()
 var ResultOrdinateMinus: ArrayList<TextView> = ArrayList()
-lateinit var ResultSumPlus: TextView
-lateinit var ResultSumMinus: TextView
-lateinit var ResultSum: TextView
+
 
 class MainActivity : AppCompatActivity() {
+    lateinit var resultSumPlus: TextView
+    lateinit var resultSumMinus: TextView
+    lateinit var resultSum: TextView
+    lateinit var checkSprings: CheckBox
+
     lateinit var binding : ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,6 +54,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun sendFunctionToElement() {
         sendFunctionToButtons()
+        sendFunctionToCheckBoxes()
 
     }
 
@@ -87,7 +92,7 @@ class MainActivity : AppCompatActivity() {
             makeResultsOrdinateMax(i, isItEnabled)
             makeResultsOrdinateMin(i, isItEnabled)
         }
-        for (i in 0..15) {
+        for (i in 0..14) {
             makeCheckBaxDrawCurve(i)
         }
         otherData()
@@ -107,7 +112,7 @@ class MainActivity : AppCompatActivity() {
         )
         // setting text
         textResultSum.text = ("<b>ΣA =</b>").toSpanned()
-        textResultSum.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+        textResultSum.textAlignment = View.TEXT_ALIGNMENT_CENTER
         textResultSum.width = widthOfAnElement
         // onClick the text a message will be displayed "HELLO GEEK"
         textResultSum.setOnClickListener()
@@ -120,19 +125,19 @@ class MainActivity : AppCompatActivity() {
         // Add EditText to LinearLayout
         binding.LayoutResultsSum?.addView(textResultSum)
 
-        ResultSum = TextView(this)
+        resultSum = TextView(this)
 
         // setting height and width
-        ResultSum.layoutParams = LinearLayout.LayoutParams(
+        resultSum.layoutParams = LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         )
         // setting text
-        ResultSum.text = ("<b>0</b>").toSpanned()
-        ResultSum.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
-        ResultSum.width = widthOfAnElement
+        resultSum.text = ("<b>0</b>").toSpanned()
+        resultSum.textAlignment = View.TEXT_ALIGNMENT_CENTER
+        resultSum.width = widthOfAnElement
         // onClick the text a message will be displayed "HELLO GEEK"
-        ResultSum.setOnClickListener()
+        resultSum.setOnClickListener()
         {
             Toast.makeText(
                 this@MainActivity, "HELLO GEEK LENGTH",
@@ -140,7 +145,7 @@ class MainActivity : AppCompatActivity() {
             ).show()
         }
         // Add EditText to LinearLayout
-        binding.LayoutResultsSum?.addView(ResultSum)
+        binding.LayoutResultsSum?.addView(resultSum)
     }
 
 
@@ -154,7 +159,7 @@ class MainActivity : AppCompatActivity() {
         )
         // setting text
         textResultSumMinus.text = ("<b>ΣA- =</b>").toSpanned()
-        textResultSumMinus.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+        textResultSumMinus.textAlignment = View.TEXT_ALIGNMENT_CENTER
         textResultSumMinus.width = widthOfAnElement
         // onClick the text a message will be displayed "HELLO GEEK"
         textResultSumMinus.setOnClickListener()
@@ -167,19 +172,19 @@ class MainActivity : AppCompatActivity() {
         // Add EditText to LinearLayout
         binding.LayoutResultsSum?.addView(textResultSumMinus)
 
-        ResultSumMinus = TextView(this)
+        resultSumMinus = TextView(this)
 
         // setting height and width
-        ResultSumMinus.layoutParams = LinearLayout.LayoutParams(
+        resultSumMinus.layoutParams = LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         )
         // setting text
-        ResultSumMinus.text = ("<b>0</b>").toSpanned()
-        ResultSumMinus.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
-        ResultSumMinus.width = widthOfAnElement
+        resultSumMinus.text = ("<b>0</b>").toSpanned()
+        resultSumMinus.textAlignment = View.TEXT_ALIGNMENT_CENTER
+        resultSumMinus.width = widthOfAnElement
         // onClick the text a message will be displayed "HELLO GEEK"
-        ResultSumMinus.setOnClickListener()
+        resultSumMinus.setOnClickListener()
         {
             Toast.makeText(
                 this@MainActivity, "HELLO GEEK LENGTH",
@@ -187,7 +192,7 @@ class MainActivity : AppCompatActivity() {
             ).show()
         }
         // Add EditText to LinearLayout
-        binding.LayoutResultsSum?.addView(ResultSumMinus)
+        binding.LayoutResultsSum?.addView(resultSumMinus)
     }
 
 
@@ -201,7 +206,7 @@ class MainActivity : AppCompatActivity() {
         )
         // setting text
         textResultSumPlus.text = ("<b>ΣA+ =</b>").toSpanned()
-        textResultSumPlus.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+        textResultSumPlus.textAlignment = View.TEXT_ALIGNMENT_CENTER
         textResultSumPlus.width = widthOfAnElement
         // onClick the text a message will be displayed "HELLO GEEK"
         textResultSumPlus.setOnClickListener()
@@ -214,19 +219,19 @@ class MainActivity : AppCompatActivity() {
         // Add EditText to LinearLayout
         binding.LayoutResultsSum?.addView(textResultSumPlus)
 
-        ResultSumPlus = TextView(this)
+        resultSumPlus = TextView(this)
 
         // setting height and width
-        ResultSumPlus.layoutParams = LinearLayout.LayoutParams(
+        resultSumPlus.layoutParams = LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         )
         // setting text
-        ResultSumPlus.text = ("<b>0</b>").toSpanned()
-        ResultSumPlus.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
-        ResultSumPlus.width = widthOfAnElement
+        resultSumPlus.text = ("<b>0</b>").toSpanned()
+        resultSumPlus.textAlignment = View.TEXT_ALIGNMENT_CENTER
+        resultSumPlus.width = widthOfAnElement
         // onClick the text a message will be displayed "HELLO GEEK"
-        ResultSumPlus.setOnClickListener()
+        resultSumPlus.setOnClickListener()
         {
             Toast.makeText(
                 this@MainActivity, "HELLO GEEK LENGTH",
@@ -234,7 +239,7 @@ class MainActivity : AppCompatActivity() {
             ).show()
         }
         // Add EditText to LinearLayout
-        binding.LayoutResultsSum?.addView(ResultSumPlus)
+        binding.LayoutResultsSum?.addView(resultSumPlus)
     }
 
 
@@ -248,7 +253,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             nameResultsOrdinateMin.setText(R.string.ymin)
-            nameResultsOrdinateMin.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            nameResultsOrdinateMin.textAlignment = View.TEXT_ALIGNMENT_CENTER
             nameResultsOrdinateMin.width = widthOfAnElement
             // Add EditText to LinearLayout
             binding.LayoutResultsOrdinateMin?.addView(nameResultsOrdinateMin)
@@ -262,7 +267,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             ResultOrdinateMinus[i-1].text = "0"
-            ResultOrdinateMinus[i-1].textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            ResultOrdinateMinus[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
             ResultOrdinateMinus[i-1].width = widthOfAnElement
             ResultOrdinateMinus[i-1].isEnabled = isItEnabled
             // onClick the text a message will be displayed "HELLO GEEK"
@@ -289,7 +294,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             nameResultsOrdinateMin.setText(R.string.ymax)
-            nameResultsOrdinateMin.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            nameResultsOrdinateMin.textAlignment = View.TEXT_ALIGNMENT_CENTER
             nameResultsOrdinateMin.width = widthOfAnElement
             // Add EditText to LinearLayout
             binding.LayoutResultsOrdinateMax?.addView(nameResultsOrdinateMin)
@@ -303,7 +308,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             ResultOrdinatePlus[i-1].text = "0"
-            ResultOrdinatePlus[i-1].textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            ResultOrdinatePlus[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
             ResultOrdinatePlus[i-1].width = widthOfAnElement
             ResultOrdinatePlus[i-1].isEnabled = isItEnabled
             // onClick the text a message will be displayed "HELLO GEEK"
@@ -330,7 +335,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             nameResultsAreaMin.setText(R.string.areaMinus)
-            nameResultsAreaMin.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            nameResultsAreaMin.textAlignment = View.TEXT_ALIGNMENT_CENTER
             nameResultsAreaMin.width = widthOfAnElement
             // Add EditText to LinearLayout
             binding.LayoutResultsAreaMin?.addView(nameResultsAreaMin)
@@ -344,7 +349,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             ResultAreaMinus[i-1].text = "0"
-            ResultAreaMinus[i-1].textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            ResultAreaMinus[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
             ResultAreaMinus[i-1].width = widthOfAnElement
             ResultAreaMinus[i-1].isEnabled = isItEnabled
             // onClick the text a message will be displayed "HELLO GEEK"
@@ -371,7 +376,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             nameResultsAreaMax.setText(R.string.areaPlus)
-            nameResultsAreaMax.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            nameResultsAreaMax.textAlignment = View.TEXT_ALIGNMENT_CENTER
             nameResultsAreaMax.width = widthOfAnElement
             // Add EditText to LinearLayout
             binding.LayoutResultsAreaMax?.addView(nameResultsAreaMax)
@@ -385,7 +390,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             ResultAreaPlus[i-1].text = "0"
-            ResultAreaPlus[i-1].textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            ResultAreaPlus[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
             ResultAreaPlus[i-1].width = widthOfAnElement
             ResultAreaPlus[i-1].isEnabled = isItEnabled
             // onClick the text a message will be displayed "HELLO GEEK"
@@ -410,7 +415,7 @@ class MainActivity : AppCompatActivity() {
         )
         // setting text
         nameResults.setText(R.string.results)
-        nameResults.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+        nameResults.textAlignment = View.TEXT_ALIGNMENT_CENTER
         // Add EditText to LinearLayout
         binding.LayoutResults?.addView(nameResults)
     }
@@ -425,7 +430,7 @@ class MainActivity : AppCompatActivity() {
         )
         // setting text
         nameOtherDate.setText(R.string.otherData)
-        nameOtherDate.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+        nameOtherDate.textAlignment = View.TEXT_ALIGNMENT_CENTER
         // Add EditText to LinearLayout
         binding.LayoutDateBelow?.addView(nameOtherDate)
     }
@@ -440,7 +445,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             nameDrawCurve.setText(R.string.drawACurve)
-            nameDrawCurve.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            nameDrawCurve.textAlignment = View.TEXT_ALIGNMENT_CENTER
             nameDrawCurve.width = 2*widthOfCheckBox
             // Add EditText to LinearLayout
             binding.LayoutDrawACurveMQd?.addView(nameDrawCurve)
@@ -470,21 +475,18 @@ class MainActivity : AppCompatActivity() {
                 else ->  {CheckBoxDrawCurve[i - 1].text = "R"+ (i-4).toString()
                     // Add CheckBox to LinearLayout
                     binding.LayoutDrawACurveReaction?.addView(CheckBoxDrawCurve[i - 1])
-                    if (i-4>2) {
+                    if (i-4>3) {
                         CheckBoxDrawCurve[i - 1].isEnabled = false
                     }
                 }
             }
 
-            CheckBoxDrawCurve[i - 1].textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            CheckBoxDrawCurve[i - 1].textAlignment = View.TEXT_ALIGNMENT_CENTER
             CheckBoxDrawCurve[i - 1].width = widthOfCheckBox
             // onClick the text a message will be displayed "HELLO GEEK"
             CheckBoxDrawCurve[i - 1].setOnClickListener()
             {
-                Toast.makeText(
-                    this@MainActivity, "HELLO GEEK LENGTH",
-                    Toast.LENGTH_LONG
-                ).show()
+                drawAGraphListener(i - 1)
             }
 
         }
@@ -493,7 +495,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun makeSpringInput(i: Int, isItEnabled: Boolean){
         if (i==0) {
-            val checkSprings = CheckBox(this)
+            checkSprings = CheckBox(this)
             // setting height and width
             checkSprings.layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -501,7 +503,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             checkSprings.setText(R.string.springs)
-            checkSprings.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            checkSprings.textAlignment = View.TEXT_ALIGNMENT_CENTER
             checkSprings.width = (widthOfAnElement*1.5).toInt()
             // Add EditText to LinearLayout
             binding.LayoutSprings?.addView(checkSprings)
@@ -515,7 +517,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             SpringInput[i-1].setText("1")
-            SpringInput[i-1].textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            SpringInput[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
             SpringInput[i-1].width = widthOfAnElement
             SpringInput[i-1].isEnabled = false
             // onClick the text a message will be displayed "HELLO GEEK"
@@ -542,7 +544,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             nameEI.text = "EI"
-            nameEI.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            nameEI.textAlignment = View.TEXT_ALIGNMENT_CENTER
             nameEI.width = widthOfAnElement
             // Add EditText to LinearLayout
             binding.LayoutEI?.addView(nameEI)
@@ -556,7 +558,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             EIInput[i-1].setText("1")
-            EIInput[i-1].textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            EIInput[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
             EIInput[i-1].width = widthOfAnElement
             EIInput[i-1].isEnabled = isItEnabled
             // onClick the text a message will be displayed "HELLO GEEK"
@@ -583,7 +585,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             nameLength.setText(R.string.length)
-            nameLength.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            nameLength.textAlignment = View.TEXT_ALIGNMENT_CENTER
             nameLength .width = widthOfAnElement
             // Add EditText to LinearLayout
             binding.LayoutLength.addView(nameLength)
@@ -597,7 +599,7 @@ class MainActivity : AppCompatActivity() {
             )
             // setting text
             LengthsInput[i-1].setText("5")
-            LengthsInput[i-1].textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+            LengthsInput[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
             LengthsInput[i-1].width = widthOfAnElement
             LengthsInput[i-1].isEnabled = isItEnabled
             // onClick the text a message will be displayed "HELLO GEEK"
@@ -628,7 +630,7 @@ class MainActivity : AppCompatActivity() {
         else {
             NumbersOfTextView[i].text = (i-1).toString()
         }
-        NumbersOfTextView[i].textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+        NumbersOfTextView[i].textAlignment = View.TEXT_ALIGNMENT_CENTER
         NumbersOfTextView[i].width = widthOfAnElement
         NumbersOfTextView[i].isEnabled = isItEnabled
         // onClick the text a message will be displayed "HELLO GEEK"
@@ -645,6 +647,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun sendFunctionToButtons() {
+        // plus button
         binding.btnPlusAField?.setOnClickListener {
             numberOfFields++
             if (numberOfFields == 10) {
@@ -652,19 +655,117 @@ class MainActivity : AppCompatActivity() {
             }
             binding.btnMinusAField?.isEnabled = true    //  make enable minusButton
             // make enable data for the field
-            val enableNumberOfField: Int = if (lastConsoleIsUsed) (numberOfFields+1)
-                                                                else numberOfFields
-            NumbersOfTextView[enableNumberOfField].isEnabled = true
+            val enableNumberOfField: Int = if (lastConsoleIsUsed) (numberOfFields + 1)
+            else numberOfFields
+            NumbersOfTextView[enableNumberOfField+1].isEnabled = true
             LengthsInput[enableNumberOfField].isEnabled = true
             EIInput[enableNumberOfField].isEnabled = true
-            SpringInput[enableNumberOfField].isEnabled = true
-            CheckBoxDrawCurve[numberOfFields].isEnabled = true
+            if (checkSprings.isChecked) {
+                SpringInput[enableNumberOfField].isEnabled = true
+            }
+            CheckBoxDrawCurve[numberOfFields + 3].isEnabled = true
             ResultAreaPlus[enableNumberOfField].isEnabled = true
             ResultAreaMinus[enableNumberOfField].isEnabled = true
             ResultOrdinatePlus[enableNumberOfField].isEnabled = true
             ResultOrdinateMinus[enableNumberOfField].isEnabled = true
         }
+
+        // minus button
+        binding.btnMinusAField?.setOnClickListener {
+            numberOfFields--
+            if (numberOfFields == 1) {
+                binding.btnMinusAField?.isEnabled = false
+            }
+            binding.btnPlusAField?.isEnabled = true    //  make enable plusButton
+            // make unenable data for the field
+            val unEnableNumberOfField: Int = if (lastConsoleIsUsed) (numberOfFields + 2)
+                                                                else (numberOfFields + 1)
+            NumbersOfTextView[unEnableNumberOfField+1].isEnabled = false
+            LengthsInput[unEnableNumberOfField].isEnabled = false
+            EIInput[unEnableNumberOfField ].isEnabled = false
+            if (checkSprings.isChecked) {
+                SpringInput[unEnableNumberOfField].isEnabled = false
+            }
+            CheckBoxDrawCurve[numberOfFields+4].isEnabled = false
+            ResultAreaPlus[unEnableNumberOfField].isEnabled = false
+            ResultAreaMinus[unEnableNumberOfField].isEnabled = false
+            ResultOrdinatePlus[unEnableNumberOfField].isEnabled = false
+            ResultOrdinateMinus[unEnableNumberOfField].isEnabled = false
+        }
     }
+
+    private fun drawAGraphListener(index: Int){
+        for (i in CheckBoxDrawCurve) {
+            i.isChecked = false
+        }
+        CheckBoxDrawCurve[index].isChecked = true
+
+    }
+
+    private fun sendFunctionToCheckBoxes(){
+        binding.chbConsoleBeginning?.setOnClickListener {
+            if (binding.chbConsoleBeginning!!.isChecked){
+                firstConsoleIsUsed = true
+                NumbersOfTextView[0].isEnabled = true
+                LengthsInput[0].isEnabled = true
+                EIInput[0].isEnabled = true
+                if (checkSprings.isChecked) {
+                    SpringInput[0].isEnabled = true
+                }
+                ResultAreaPlus[0].isEnabled = true
+                ResultAreaMinus[0].isEnabled = true
+                ResultOrdinatePlus[0].isEnabled = true
+                ResultOrdinateMinus[0].isEnabled = true
+            }
+            else {
+                firstConsoleIsUsed = true
+                NumbersOfTextView[0].isEnabled = false
+                LengthsInput[0].isEnabled = false
+                EIInput[0].isEnabled = false
+                if (checkSprings.isChecked) {
+                    SpringInput[0].isEnabled = false
+                }
+                ResultAreaPlus[0].isEnabled = false
+                ResultAreaMinus[0].isEnabled = false
+                ResultOrdinatePlus[0].isEnabled = false
+                ResultOrdinateMinus[0].isEnabled = false
+            }
+        }
+
+        binding.chbConsoleEnd?.setOnClickListener {
+            if (binding.chbConsoleEnd!!.isChecked){
+                lastConsoleIsUsed = true
+                val enableNumberOfField = numberOfFields + 1
+                NumbersOfTextView[enableNumberOfField+1].isEnabled = true
+                LengthsInput[enableNumberOfField].isEnabled = true
+                EIInput[enableNumberOfField].isEnabled = true
+                if (checkSprings.isChecked) {
+                    SpringInput[enableNumberOfField].isEnabled = true
+                }
+                CheckBoxDrawCurve[numberOfFields + 3].isEnabled = true
+                ResultAreaPlus[enableNumberOfField].isEnabled = true
+                ResultAreaMinus[enableNumberOfField].isEnabled = true
+                ResultOrdinatePlus[enableNumberOfField].isEnabled = true
+                ResultOrdinateMinus[enableNumberOfField].isEnabled = true
+            }
+            else {
+                lastConsoleIsUsed = false
+                val enableNumberOfField = numberOfFields + 1
+                NumbersOfTextView[enableNumberOfField + 1].isEnabled = false
+                LengthsInput[enableNumberOfField].isEnabled = false
+                EIInput[enableNumberOfField].isEnabled = false
+                if (checkSprings.isChecked) {
+                    SpringInput[enableNumberOfField].isEnabled = false
+                }
+                CheckBoxDrawCurve[numberOfFields + 3].isEnabled = false
+                ResultAreaPlus[enableNumberOfField].isEnabled = false
+                ResultAreaMinus[enableNumberOfField].isEnabled = false
+                ResultOrdinatePlus[enableNumberOfField].isEnabled = false
+                ResultOrdinateMinus[enableNumberOfField].isEnabled = false
+            }
+        }
+    }
+
 
 }
 
