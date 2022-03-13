@@ -12,5 +12,9 @@
     <string name="precision">Genauigkeit</string>
     <string name="save">speichern</string>
     <string name="drawACurve">Diagramm von</string>
+    <string name="otherData">andere Datei sind unten</string>
+    <string name="results">Ergebnisse: max/min Flächen und Ordinateen</string>
+    <string name="areaPlus">Fläche +</string>
+    <string name="areaMinus">Fläche -</string>
 
 </resources>

@@ -12,4 +12,8 @@
     <string name="precision">точность</string>
     <string name="save">сохранить</string>
     <string name="drawACurve">график</string>
+    <string name="otherData">остальные данные ниже</string>
+    <string name="results">результаты: макс, мин площади и ординаты</string>
+    <string name="areaPlus">площадь +</string>
+    <string name="areaMinus">площадь -</string>
 </resources>
