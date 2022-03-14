@@ -1,6 +1,8 @@
 package com.example.ner
 
 import android.content.res.Resources
+import android.graphics.*
+import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -9,14 +11,18 @@ import android.text.Spanned
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.example.ner.databinding.ActivityMainBinding
 
 var numberOfFields: Int = 3
+var arrayOfNumbersFields = arrayListOf<Int>(1, 2, 3)
 var firstConsoleIsUsed: Boolean = false
 var lastConsoleIsUsed: Boolean = false
+var currentField: Int = 1
+var currentGraph: String = "M"
 
 var widthOfApp: Int = 0
 var heightOfApp: Int = 0
@@ -32,6 +38,9 @@ var ResultAreaMinus: ArrayList<TextView> = ArrayList()
 var ResultOrdinatePlus: ArrayList<TextView> = ArrayList()
 var ResultOrdinateMinus: ArrayList<TextView> = ArrayList()
 
+lateinit var canvas: Canvas
+var myPaint = Paint()
+var myBitmap = Bitmap.createBitmap(100, 100,  Bitmap.Config.ARGB_8888)
 
 class MainActivity : AppCompatActivity() {
     lateinit var resultSumPlus: TextView
@@ -55,8 +64,63 @@ class MainActivity : AppCompatActivity() {
     private fun sendFunctionToElement() {
         sendFunctionToButtons()
         sendFunctionToCheckBoxes()
+        makeSpinner()
+        initCanvas()
 
     }
+
+
+    private fun initCanvas(){
+        myBitmap = Bitmap.createBitmap(
+            myWidthImage,
+            myHeightImage,
+            Bitmap.Config.ARGB_8888
+        )
+        canvas = Canvas(myBitmap)
+        myPaint = Paint()
+        myPaint.color = Color.BLACK
+        myPaint.strokeWidth = 4F
+        myPaint.textSize = textSize
+        myPaint.textAlign = Paint.Align.CENTER
+        myPaint.style = Paint.Style.STROKE
+
+        myBluePaint.color = ContextCompat.getColor(this, R.color.my_blue_color)
+        myBluePaint.strokeWidth = 4F
+        myBluePaint.textSize = textSize
+        myBluePaint.textAlign = Paint.Align.CENTER
+
+        binding.imageView.background = BitmapDrawable(resources, myBitmap)
+    }
+
+    private fun canvasClean(){
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+    }
+
+
+    private fun makeSpinner() {
+        val arrayAdapter = ArrayAdapter(this,
+            android.R.layout.simple_spinner_item, arrayOfNumbersFields)
+        binding.spinnerNumbersOfFields?.adapter = arrayAdapter
+        binding.spinnerNumbersOfFields?.onItemSelectedListener = object:
+                                            AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View,
+                position: Int,      // it is index in the array
+                id: Long) {
+
+                currentField = arrayOfNumbersFields[position]
+            }
+
+            override fun onNothingSelected(p0: AdapterView<*>?) {
+                Toast.makeText(
+                    this@MainActivity, currentField.toString(),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
 
     private fun getSize() {
         widthOfApp = Resources.getSystem().displayMetrics.widthPixels
@@ -507,6 +571,9 @@ class MainActivity : AppCompatActivity() {
             checkSprings.width = (widthOfAnElement*1.5).toInt()
             // Add EditText to LinearLayout
             binding.LayoutSprings?.addView(checkSprings)
+            checkSprings.setOnClickListener()
+            { openAllSprings()
+            }
         } else {
             SpringInput.add(EditText(this))
 
@@ -661,13 +728,15 @@ class MainActivity : AppCompatActivity() {
             LengthsInput[enableNumberOfField].isEnabled = true
             EIInput[enableNumberOfField].isEnabled = true
             if (checkSprings.isChecked) {
-                SpringInput[enableNumberOfField].isEnabled = true
+                SpringInput[numberOfFields].isEnabled = true
             }
             CheckBoxDrawCurve[numberOfFields + 3].isEnabled = true
             ResultAreaPlus[enableNumberOfField].isEnabled = true
             ResultAreaMinus[enableNumberOfField].isEnabled = true
             ResultOrdinatePlus[enableNumberOfField].isEnabled = true
             ResultOrdinateMinus[enableNumberOfField].isEnabled = true
+
+            arrayOfNumbersFields.add(enableNumberOfField)
         }
 
         // minus button
@@ -684,13 +753,27 @@ class MainActivity : AppCompatActivity() {
             LengthsInput[unEnableNumberOfField].isEnabled = false
             EIInput[unEnableNumberOfField ].isEnabled = false
             if (checkSprings.isChecked) {
-                SpringInput[unEnableNumberOfField].isEnabled = false
+                SpringInput[numberOfFields].isEnabled = false
             }
             CheckBoxDrawCurve[numberOfFields+4].isEnabled = false
             ResultAreaPlus[unEnableNumberOfField].isEnabled = false
             ResultAreaMinus[unEnableNumberOfField].isEnabled = false
             ResultOrdinatePlus[unEnableNumberOfField].isEnabled = false
             ResultOrdinateMinus[unEnableNumberOfField].isEnabled = false
+
+            arrayOfNumbersFields.remove(arrayOfNumbersFields.size)
+            if (unEnableNumberOfField == currentField) {
+                currentField --
+            }
+            if (currentGraph[0] == 'R') {
+                var numberOfGraph: Int = (currentGraph.substringAfter('R')).toInt()
+                if (unEnableNumberOfField == numberOfGraph){
+                    CheckBoxDrawCurve[numberOfGraph+3].isChecked= false
+                    numberOfGraph --
+                    CheckBoxDrawCurve[numberOfGraph+3].isChecked = true
+                    currentGraph = "R$numberOfGraph"
+                }
+            }
         }
     }
 
@@ -700,6 +783,14 @@ class MainActivity : AppCompatActivity() {
         }
         CheckBoxDrawCurve[index].isChecked = true
 
+        currentGraph = when (index) {
+            0 -> "M"
+            1 -> "Q"
+            2 -> "d"
+            else -> {
+                'R' + (index - 3).toString()
+            }
+        }
     }
 
     private fun sendFunctionToCheckBoxes(){
@@ -709,9 +800,6 @@ class MainActivity : AppCompatActivity() {
                 NumbersOfTextView[0].isEnabled = true
                 LengthsInput[0].isEnabled = true
                 EIInput[0].isEnabled = true
-                if (checkSprings.isChecked) {
-                    SpringInput[0].isEnabled = true
-                }
                 ResultAreaPlus[0].isEnabled = true
                 ResultAreaMinus[0].isEnabled = true
                 ResultOrdinatePlus[0].isEnabled = true
@@ -722,9 +810,6 @@ class MainActivity : AppCompatActivity() {
                 NumbersOfTextView[0].isEnabled = false
                 LengthsInput[0].isEnabled = false
                 EIInput[0].isEnabled = false
-                if (checkSprings.isChecked) {
-                    SpringInput[0].isEnabled = false
-                }
                 ResultAreaPlus[0].isEnabled = false
                 ResultAreaMinus[0].isEnabled = false
                 ResultOrdinatePlus[0].isEnabled = false
@@ -765,7 +850,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
+    private fun openAllSprings(){
+        if (checkSprings.isChecked) {
+            for (i in 0..numberOfFields) {
+                SpringInput[i].isEnabled = true
+            }
+        }
+        else {
+            for (i in 0..numberOfFields) {
+                SpringInput[i].isEnabled = false
+            }
+        }
+    }
 
 }
 
