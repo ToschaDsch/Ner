@@ -16,11 +16,10 @@
             android:id="@+id/imageView"
             android:layout_width="0dp"
             android:layout_height="150dp"
-            android:background="#82558A"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_launcher_background" />
+            tools:srcCompat="@tools:sample/backgrounds/scenic" />
 
         <LinearLayout
             android:id="@+id/LayoutDrawACurveMQd"

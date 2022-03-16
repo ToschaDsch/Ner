@@ -6,8 +6,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.text.Html
-import android.text.Spanned
+import android.text.*
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
@@ -18,11 +17,14 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.example.ner.databinding.ActivityMainBinding
 
 var numberOfFields: Int = 3
-var arrayOfNumbersFields = arrayListOf<Int>(1, 2, 3)
+var arrayOfNumbersFields = arrayListOf(1, 2, 3)
 var firstConsoleIsUsed: Boolean = false
 var lastConsoleIsUsed: Boolean = false
 var currentField: Int = 1
+var distanceToSection: Float = 7.5f
 var currentGraph: String = "M"
+
+var field: ArrayList<MyField> = ArrayList()
 
 var widthOfApp: Int = 0
 var heightOfApp: Int = 0
@@ -39,8 +41,142 @@ var ResultOrdinatePlus: ArrayList<TextView> = ArrayList()
 var ResultOrdinateMinus: ArrayList<TextView> = ArrayList()
 
 lateinit var canvas: Canvas
-var myPaint = Paint()
-var myBitmap = Bitmap.createBitmap(100, 100,  Bitmap.Config.ARGB_8888)
+var paintField = Paint()
+var paintBearing = Paint()
+var paintGraph = Paint()
+var paintTextField = Paint()
+var paintTextBearing = Paint()
+var paintTextMyMessage = Paint()
+var paintOfTheSection = Paint()
+var widthOfMyImage: Int = 0
+var heightOfMyImage: Int = 0
+var x0OfMyImage: Float = 0f
+var y0OfMyImage: Float = 0f
+var heightOfField: Float = 8f
+var heightOfBearing: Float = 4f
+var distanceToText: Float = 30f
+
+var myBitmap = Bitmap.createBitmap(100, 100,  Bitmap.Config.ARGB_8888)!!
+var widthOfImageView: Int = 0
+var heightOfImageView: Int = 0
+var textSize: Float = 12f
+var scaleX: Float = 1f
+var scaleY: Float = 1f
+
+
+data class Reaction( // # tables of data for reactions
+    var tableAreaPlus: ArrayList<Float> = ArrayList(),
+    var tableAreaMinus: ArrayList<Float> = ArrayList(),
+    var tableOrdinatePlus: ArrayList<Float> = ArrayList(),
+    var tableOrdinateMinus:  ArrayList<Float> = ArrayList()
+    )
+
+
+class MyField(
+    var lengthOfTheField: Float,
+    var beginningOfTheField: Float,
+    var EIofTheField: Float,
+    var numberOfTheField: Int
+) {
+
+    //global n0, nn, n2 it is firstConsoleIsUsed, numberOfFields, lastConsoleIsUsed
+    // l1: float = 1, l01: float = 1, ei1: float = 1, i1: float = 0, **kwargs: object)
+
+    fun drawOneField() { // it really draws one field
+
+        //global nn, kmas, t0, Y0, c_beg, c_end, n_sec, d_sec
+        val x0: Float = if (firstConsoleIsUsed) x0OfMyImage + this.beginningOfTheField / scaleX
+                else  x0OfMyImage + (this.beginningOfTheField - field[0].lengthOfTheField)/ scaleX
+        val xn: Float = x0 + this.lengthOfTheField / scaleX
+
+        // draw a field
+        when (this.numberOfTheField) {
+            0 -> { // console at the beginning
+                canvas.drawLine(x0, y0OfMyImage, xn, y0OfMyImage + heightOfField, paintField)
+            }
+            numberOfFields + 1 -> {// console at the end
+                canvas.drawLine(x0, y0OfMyImage + heightOfField, xn, y0OfMyImage, paintField)
+            }
+            else -> { // an intermediate field
+                canvas.drawLine(
+                    x0,y0OfMyImage + heightOfField,
+                    xn,y0OfMyImage + heightOfField,
+                    paintField
+                )
+                canvas.drawLine(
+                    x0,y0OfMyImage,
+                    xn, y0OfMyImage,
+                    paintField
+                )
+            }
+        }
+        // draw text for the field
+        var str1: String = 'l' + this.numberOfTheField.toString()
+        canvas.drawText(str1, (x0 + xn) / 2, y0OfMyImage - distanceToText, paintTextField)
+        // draw bearings at the beginning of the field
+       canvas.drawCircle(x0,
+           y0OfMyImage + heightOfField + heightOfBearing, heightOfBearing, paintBearing)
+        str1 = 's' + (this.numberOfTheField - 1).toString()
+        // draw text to bearing at the beginning of thr field
+       canvas.drawText(str1, x0, y0OfMyImage + distanceToText + textSize, paintTextBearing)
+        // draw text to bearing at the end of thr field
+       str1 = "s" +this.numberOfTheField.toString()
+        canvas.drawText(str1, xn,
+            y0OfMyImage + distanceToText + textSize, paintTextBearing)
+        // draw bearings at the end of the field
+        canvas.drawCircle(xn,
+            y0OfMyImage + heightOfField + heightOfBearing, heightOfBearing, paintBearing)
+
+       if (this.numberOfTheField == currentField) {
+           // draw section
+           val xs: Float = x0OfMyImage+ (this.beginningOfTheField + distanceToSection) / scaleX
+           canvas.drawLine(xs, y0OfMyImage - 20, xs, y0OfMyImage + 20, paintOfTheSection)
+       }
+    }
+
+    fun fragmentationOfOneField() {  // make fragmentation of the field
+        /*
+        global d_sec, dmin, n_sec, xg, mg, qg, dg
+        dfi = int(self.__l1 / dmin)
+        df = self.__l1 / dfi
+
+        x = [0] * (dfi + 1)
+        x[0] = 0
+        i = 0
+        for i in range(1, dfi + 1):
+        x[i] = x[i - 1] + df
+        x[i] = x[i - 1] + df - 0.0001
+        x.insert(1, 0.0001)
+
+        check1 = 0
+        if self.__i1 == n_sec:  # the section is in the field
+        for i in range(1, len(x)):
+        if x[i] == d_sec:
+        x.insert(i + 1, d_sec + 0.0001)
+        check1 = 1
+        break
+        if check1 == 0:
+        for i in range(1, len(x)):
+        if x[i - 1] < d_sec < x[i]:
+        x.insert(i, d_sec)
+        x.insert(i + 1, d_sec + 0.0001)
+        break
+
+        # draw it
+                for i in range(len(x)):
+        xi = int((600 - B0) / 2 + (self.__l01 + x[i]) / kmas)
+        canv.create_line(xi, Y0 - 5, xi, Y0)
+
+        for i in range(len(x)):
+        solve_it(x[i], self.__i1)
+
+        if self.__i1 == nn + n2:  # the last point
+        solve_it(self.__l1, self.__i1)
+
+         */
+    }
+}
+
 
 class MainActivity : AppCompatActivity() {
     lateinit var resultSumPlus: TextView
@@ -59,6 +195,36 @@ class MainActivity : AppCompatActivity() {
         getSize()
         makeArrayOfDate()
         sendFunctionToElement()
+        initFirstModel()
+        drawAll()
+    }
+
+
+    private fun initFirstModel() {
+        for (i in 0..3) {
+            field.add(MyField(10f, i*10f, 1f, i))
+        }
+    }
+
+
+    private fun drawAll() {
+        canvasClean()
+
+        var sumLengthOfFields = 0f
+        val firstConsole: Int = if (!firstConsoleIsUsed) 1 else 0
+        for (i in firstConsole..numberOfFields) {
+            sumLengthOfFields += field[i].lengthOfTheField
+        }
+        if (firstConsoleIsUsed) sumLengthOfFields += field[0].lengthOfTheField
+        if (lastConsoleIsUsed) sumLengthOfFields += field[numberOfFields+1].lengthOfTheField
+        scaleX =  sumLengthOfFields / widthOfMyImage
+
+        if (firstConsoleIsUsed) field[0].drawOneField()
+        for (i in 1..numberOfFields) {
+            field[i].drawOneField()
+        }
+        if (lastConsoleIsUsed) field[numberOfFields+1].drawOneField()
+
     }
 
     private fun sendFunctionToElement() {
@@ -66,31 +232,68 @@ class MainActivity : AppCompatActivity() {
         sendFunctionToCheckBoxes()
         makeSpinner()
         initCanvas()
-
     }
 
 
     private fun initCanvas(){
         myBitmap = Bitmap.createBitmap(
-            myWidthImage,
-            myHeightImage,
+                widthOfImageView,
+                heightOfImageView,
             Bitmap.Config.ARGB_8888
         )
         canvas = Canvas(myBitmap)
-        myPaint = Paint()
-        myPaint.color = Color.BLACK
-        myPaint.strokeWidth = 4F
-        myPaint.textSize = textSize
-        myPaint.textAlign = Paint.Align.CENTER
-        myPaint.style = Paint.Style.STROKE
 
-        myBluePaint.color = ContextCompat.getColor(this, R.color.my_blue_color)
-        myBluePaint.strokeWidth = 4F
-        myBluePaint.textSize = textSize
-        myBluePaint.textAlign = Paint.Align.CENTER
+        paintField = Paint()
+        paintField.color = ContextCompat.getColor(this, R.color.field)
+        paintField.strokeWidth = 8F
+        paintField.textSize = textSize
+        paintField.textAlign = Paint.Align.CENTER
+        paintField.style = Paint.Style.STROKE
+
+        paintBearing.color = ContextCompat.getColor(this, R.color.bearing)
+        paintBearing.strokeWidth = 4F
+        paintBearing.textSize = textSize
+        paintBearing.textAlign = Paint.Align.CENTER
+        paintField.style = Paint.Style.STROKE
+
+        paintGraph = Paint()
+        paintGraph.color = ContextCompat.getColor(this, R.color.graph)
+        paintGraph.strokeWidth = 4F
+        paintGraph.textSize = textSize
+        paintGraph.textAlign = Paint.Align.CENTER
+        paintGraph.style = Paint.Style.STROKE
+
+        paintTextField = Paint()
+        paintTextField.color = ContextCompat.getColor(this, R.color.textField)
+        paintTextField.strokeWidth = 4F
+        paintTextField.textSize = textSize
+        paintTextField.textAlign = Paint.Align.CENTER
+        paintTextField.style = Paint.Style.FILL
+
+        paintTextBearing = Paint()
+        paintTextBearing.color = ContextCompat.getColor(this, R.color.textBearing)
+        paintTextBearing.strokeWidth = 4F
+        paintTextBearing.textSize = textSize
+        paintTextBearing.textAlign = Paint.Align.CENTER
+        paintTextBearing.style = Paint.Style.FILL
+
+        paintTextMyMessage = Paint()
+        paintTextMyMessage.color = ContextCompat.getColor(this, R.color.textMessage)
+        paintTextMyMessage.strokeWidth = 4F
+        paintTextMyMessage.textSize = textSize
+        paintTextMyMessage.textAlign = Paint.Align.CENTER
+        paintTextMyMessage.style = Paint.Style.FILL
+
+        paintOfTheSection = Paint()
+        paintOfTheSection.color = ContextCompat.getColor(this, R.color.section)
+        paintOfTheSection.strokeWidth = 4F
+        paintOfTheSection.textSize = textSize
+        paintOfTheSection.textAlign = Paint.Align.CENTER
+        paintOfTheSection.style = Paint.Style.STROKE
 
         binding.imageView.background = BitmapDrawable(resources, myBitmap)
     }
+
 
     private fun canvasClean(){
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
@@ -125,9 +328,20 @@ class MainActivity : AppCompatActivity() {
     private fun getSize() {
         widthOfApp = Resources.getSystem().displayMetrics.widthPixels
         heightOfApp = Resources.getSystem().displayMetrics.heightPixels
-        val dpScale = Resources.getSystem().displayMetrics.density
+        val dpScale: Float = Resources.getSystem().displayMetrics.density
         widthOfAnElement = ((widthOfApp-20*dpScale)/12).toInt()
         widthOfCheckBox = ((widthOfApp-20*dpScale)/11).toInt()
+
+        widthOfImageView = widthOfApp
+        heightOfImageView  = (150 * dpScale).toInt()
+        widthOfMyImage = (0.8* widthOfImageView).toInt()
+        heightOfMyImage = (0.8* heightOfImageView).toInt()
+        x0OfMyImage = (0.1 * widthOfImageView).toFloat()
+        y0OfMyImage = (0.5 * heightOfImageView).toFloat()
+        heightOfField *= dpScale
+        heightOfBearing *= dpScale
+        distanceToText *= dpScale
+        textSize *= dpScale
     }
 
 
@@ -536,7 +750,8 @@ class MainActivity : AppCompatActivity() {
                     // Add CheckBox to LinearLayout
                     binding.LayoutDrawACurveMQd?.addView(CheckBoxDrawCurve[i - 1])
                 }
-                else ->  {CheckBoxDrawCurve[i - 1].text = "R"+ (i-4).toString()
+                else ->  {
+                    CheckBoxDrawCurve[i - 1].text = "R"+ (i-4).toString()
                     // Add CheckBox to LinearLayout
                     binding.LayoutDrawACurveReaction?.addView(CheckBoxDrawCurve[i - 1])
                     if (i-4>3) {
@@ -669,14 +884,29 @@ class MainActivity : AppCompatActivity() {
             LengthsInput[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
             LengthsInput[i-1].width = widthOfAnElement
             LengthsInput[i-1].isEnabled = isItEnabled
+            LengthsInput[i-1].inputType = InputType.TYPE_CLASS_NUMBER or
+                    InputType.TYPE_NUMBER_FLAG_DECIMAL
+            LengthsInput[i-1].imeOptions = 1
+
             // onClick the text a message will be displayed "HELLO GEEK"
-            LengthsInput[i-1].setOnClickListener()
-            {
-                Toast.makeText(
-                    this@MainActivity, "HELLO GEEK LENGTH",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+            LengthsInput[i-1].addTextChangedListener(object: TextWatcher {
+                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                }
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    LengthsInput[i - 1].error = "Пока всё ок"
+                }
+                override fun afterTextChanged(p0: Editable?) {
+                    try {
+                        field[i-1].lengthOfTheField = p0.toString().toFloat()
+                        LengthsInput[i - 1].error = null
+
+                    }
+                    catch (exception: NumberFormatException) {
+                        LengthsInput[i - 1].error = "falsch!"
+                    }
+                }
+                })
+
             // Add EditText to LinearLayout
             binding.LayoutLength.addView(LengthsInput[i-1])
         }
