@@ -16,5 +16,6 @@
     <string name="results">Ergebnisse: max/min Flächen und Ordinateen</string>
     <string name="areaPlus">Fläche +</string>
     <string name="areaMinus">Fläche -</string>
+    <string name="wrong">falsch!</string>
 
 </resources>

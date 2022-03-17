@@ -17,6 +17,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.example.ner.databinding.ActivityMainBinding
 
 var numberOfFields: Int = 3
+var precisionOfFragmentation: Int = 6
 var arrayOfNumbersFields = arrayListOf(1, 2, 3)
 var firstConsoleIsUsed: Boolean = false
 var lastConsoleIsUsed: Boolean = false
@@ -227,13 +228,42 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+
     private fun sendFunctionToElement() {
         sendFunctionToButtons()
         sendFunctionToCheckBoxes()
+        sendFunctionToPrecision()
         makeSpinner()
         initCanvas()
     }
 
+
+    private fun sendFunctionToPrecision() {
+        binding.textPrecision?.inputType = InputType.TYPE_CLASS_NUMBER
+        binding.textPrecision?.imeOptions = 1
+        binding.textPrecision?.addTextChangedListener(object: TextWatcher {
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+            }
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+
+            }
+            override fun afterTextChanged(p0: Editable?) {
+                try {
+                    if (p0.toString().toFloat()>2){
+                        precisionOfFragmentation = p0.toString().toInt()
+                        binding.textPrecision!!.error = null
+                        drawAll()
+                    }
+                    else {
+                        binding.textPrecision!!.error = getString(R.string.wrong)
+                    }
+                }
+                catch (exception: NumberFormatException) {
+                    binding.textPrecision!!.error = getString(R.string.wrong)
+                }
+            }
+        })
+    }
 
     private fun initCanvas(){
         myBitmap = Bitmap.createBitmap(
@@ -802,14 +832,11 @@ class MainActivity : AppCompatActivity() {
             SpringInput[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
             SpringInput[i-1].width = widthOfAnElement
             SpringInput[i-1].isEnabled = false
-            // onClick the text a message will be displayed "HELLO GEEK"
-            SpringInput[i-1].setOnClickListener()
-            {
-                Toast.makeText(
-                    this@MainActivity, "HELLO GEEK LENGTH",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+            SpringInput[i-1].inputType = InputType.TYPE_CLASS_NUMBER or
+                    InputType.TYPE_NUMBER_FLAG_DECIMAL
+            SpringInput[i-1].imeOptions = 1
+            // check data of k
+            checkInputData(SpringInput[i-1], i-1, "springs")
             // Add EditText to LinearLayout
             binding.LayoutSprings?.addView(SpringInput[i-1])
         }
@@ -843,17 +870,49 @@ class MainActivity : AppCompatActivity() {
             EIInput[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
             EIInput[i-1].width = widthOfAnElement
             EIInput[i-1].isEnabled = isItEnabled
-            // onClick the text a message will be displayed "HELLO GEEK"
-            EIInput[i-1].setOnClickListener()
-            {
-                Toast.makeText(
-                    this@MainActivity, "HELLO GEEK LENGTH",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+            EIInput[i-1].inputType = InputType.TYPE_CLASS_NUMBER or
+                    InputType.TYPE_NUMBER_FLAG_DECIMAL
+            EIInput[i-1].imeOptions = 1
+            // check the data of EI
+            checkInputData(EIInput[i-1], i-1, "EI")
             // Add EditText to LinearLayout
             binding.LayoutEI?.addView(EIInput[i-1])
         }
+    }
+
+    private fun checkInputData(editText: EditText, index: Int, lengthIEorSprings: String) { // check if input > 0,
+        // index - number of editText and field
+        // lengthIEorSprings - what I have to check
+        editText.addTextChangedListener(object: TextWatcher {
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+            }
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+
+            }
+            override fun afterTextChanged(p0: Editable?) {
+                try {
+                    if (p0.toString().toFloat()>0){
+                        when (lengthIEorSprings) {
+                            "length" -> { field[index].lengthOfTheField = p0.toString().toFloat()
+                                    sendBeginningOfTheField () }
+                            "EI"    ->  {field[index].EIofTheField = p0.toString().toFloat()
+                            }
+                            "springs" -> {
+
+                            }
+                        }
+                        LengthsInput[index].error = null
+                        drawAll()
+                    }
+                    else {
+                        LengthsInput[index].error = getString(R.string.wrong)
+                    }
+                }
+                catch (exception: NumberFormatException) {
+                    LengthsInput[index].error = getString(R.string.wrong)
+                }
+            }
+        })
     }
 
 
@@ -873,7 +932,6 @@ class MainActivity : AppCompatActivity() {
             binding.LayoutLength.addView(nameLength)
         } else {
             LengthsInput.add(EditText(this))
-
             // setting height and width
             LengthsInput[i-1].layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -887,28 +945,19 @@ class MainActivity : AppCompatActivity() {
             LengthsInput[i-1].inputType = InputType.TYPE_CLASS_NUMBER or
                     InputType.TYPE_NUMBER_FLAG_DECIMAL
             LengthsInput[i-1].imeOptions = 1
-
-            // onClick the text a message will be displayed "HELLO GEEK"
-            LengthsInput[i-1].addTextChangedListener(object: TextWatcher {
-                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                }
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                    LengthsInput[i - 1].error = "Пока всё ок"
-                }
-                override fun afterTextChanged(p0: Editable?) {
-                    try {
-                        field[i-1].lengthOfTheField = p0.toString().toFloat()
-                        LengthsInput[i - 1].error = null
-
-                    }
-                    catch (exception: NumberFormatException) {
-                        LengthsInput[i - 1].error = "falsch!"
-                    }
-                }
-                })
-
+            // check the data of length
+            checkInputData(LengthsInput[i-1], i-1, "length")
             // Add EditText to LinearLayout
             binding.LayoutLength.addView(LengthsInput[i-1])
+        }
+    }
+
+
+    private fun sendBeginningOfTheField() {
+        field[0].beginningOfTheField = 0f
+        for (index in 1..numberOfFields) {
+            field[index].beginningOfTheField = field[index-1].beginningOfTheField +
+                    field[index-1].lengthOfTheField
         }
     }
 
@@ -930,20 +979,11 @@ class MainActivity : AppCompatActivity() {
         NumbersOfTextView[i].textAlignment = View.TEXT_ALIGNMENT_CENTER
         NumbersOfTextView[i].width = widthOfAnElement
         NumbersOfTextView[i].isEnabled = isItEnabled
-        // onClick the text a message will be displayed "HELLO GEEK"
-        NumbersOfTextView[i].setOnClickListener()
-        {
-            Toast.makeText(
-                this@MainActivity, "HELLO GEEK",
-                Toast.LENGTH_LONG
-            ).show()
-        }
         // Add TextView to LinearLayout
         binding.LayoutNumbers?.addView(NumbersOfTextView[i])
     }
 
-
-    private fun sendFunctionToButtons() {
+    private fun plusButton(){
         // plus button
         binding.btnPlusAField?.setOnClickListener {
             numberOfFields++
@@ -953,7 +993,7 @@ class MainActivity : AppCompatActivity() {
             binding.btnMinusAField?.isEnabled = true    //  make enable minusButton
             // make enable data for the field
             val enableNumberOfField: Int = if (lastConsoleIsUsed) (numberOfFields + 1)
-            else numberOfFields
+                                                                else numberOfFields
             NumbersOfTextView[enableNumberOfField+1].isEnabled = true
             LengthsInput[enableNumberOfField].isEnabled = true
             EIInput[enableNumberOfField].isEnabled = true
@@ -967,8 +1007,37 @@ class MainActivity : AppCompatActivity() {
             ResultOrdinateMinus[enableNumberOfField].isEnabled = true
 
             arrayOfNumbersFields.add(enableNumberOfField)
+
+            makeNeuDateOfField()
+            drawAll()
+        }
+    }
+
+    private fun makeNeuDateOfField() {
+        var l: Float
+        var l0: Float = 0f
+        try {
+            l = LengthsInput[numberOfFields].text.toString().toFloat()
+            l0 = field[numberOfFields-1].beginningOfTheField + field[numberOfFields-1].lengthOfTheField
+        }
+        catch (exception: NumberFormatException) {
+            LengthsInput[numberOfFields].error = getString(R.string.wrong)
+            l = 10f
         }
 
+        var EI: Float = 1f
+        try {
+            EI = EIInput[numberOfFields].text.toString().toFloat()
+        }
+        catch (exception: NumberFormatException) {
+            EIInput[numberOfFields].error = getString(R.string.wrong)
+            EI = 1f
+        }
+        field.add(MyField(l, l0, EI, numberOfFields))
+    }
+
+
+    private fun minusButton() {
         // minus button
         binding.btnMinusAField?.setOnClickListener {
             numberOfFields--
@@ -978,7 +1047,7 @@ class MainActivity : AppCompatActivity() {
             binding.btnPlusAField?.isEnabled = true    //  make enable plusButton
             // make unenable data for the field
             val unEnableNumberOfField: Int = if (lastConsoleIsUsed) (numberOfFields + 2)
-                                                                else (numberOfFields + 1)
+            else (numberOfFields + 1)
             NumbersOfTextView[unEnableNumberOfField+1].isEnabled = false
             LengthsInput[unEnableNumberOfField].isEnabled = false
             EIInput[unEnableNumberOfField ].isEnabled = false
@@ -1004,7 +1073,14 @@ class MainActivity : AppCompatActivity() {
                     currentGraph = "R$numberOfGraph"
                 }
             }
+            field.removeAt(numberOfFields)
+            drawAll()
         }
+    }
+
+    private fun sendFunctionToButtons() {
+        plusButton()
+        minusButton()
     }
 
     private fun drawAGraphListener(index: Int){

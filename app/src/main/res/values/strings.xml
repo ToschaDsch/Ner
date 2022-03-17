@@ -18,4 +18,5 @@
     <string name="areaMinus">area -</string>
     <string name="ymax" translatable="false">ymax</string>
     <string name="ymin" translatable="false">ymin</string>
+    <string name="wrong">wrong!</string>
 </resources>

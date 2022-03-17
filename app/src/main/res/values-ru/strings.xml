@@ -16,4 +16,5 @@
     <string name="results">результаты: макс, мин площади и ординаты</string>
     <string name="areaPlus">площадь +</string>
     <string name="areaMinus">площадь -</string>
+    <string name="wrong">ноль!</string>
 </resources>
