@@ -1013,27 +1013,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun makeNeuDateOfField() {
+    private fun makeNeuDateOfField(numberOfNeuField: Int) {
         var l: Float
-        var l0: Float = 0f
+        var l0 = 0f
         try {
-            l = LengthsInput[numberOfFields].text.toString().toFloat()
-            l0 = field[numberOfFields-1].beginningOfTheField + field[numberOfFields-1].lengthOfTheField
+            l = LengthsInput[numberOfNeuField].text.toString().toFloat()
+            l0 = field[numberOfNeuField-1].beginningOfTheField + field[numberOfNeuField-1].lengthOfTheField
         }
         catch (exception: NumberFormatException) {
-            LengthsInput[numberOfFields].error = getString(R.string.wrong)
+            LengthsInput[numberOfNeuField].error = getString(R.string.wrong)
             l = 10f
         }
 
-        var EI: Float = 1f
+        var EI: Float
         try {
-            EI = EIInput[numberOfFields].text.toString().toFloat()
+            EI = EIInput[numberOfNeuField].text.toString().toFloat()
         }
         catch (exception: NumberFormatException) {
-            EIInput[numberOfFields].error = getString(R.string.wrong)
+            EIInput[numberOfNeuField].error = getString(R.string.wrong)
             EI = 1f
         }
-        field.add(MyField(l, l0, EI, numberOfFields))
+        field.add(MyField(l, l0, EI, numberOfNeuField))
     }
 
 
