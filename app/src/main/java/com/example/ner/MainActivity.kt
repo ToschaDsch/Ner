@@ -22,7 +22,7 @@ var arrayOfNumbersFields = arrayListOf(1, 2, 3)
 var firstConsoleIsUsed: Boolean = false
 var lastConsoleIsUsed: Boolean = false
 var currentField: Int = 1
-var distanceToSection: Float = 7.5f
+var distanceToSection: Float = 2.5f
 var currentGraph: String = "M"
 
 var field: ArrayList<MyField> = ArrayList()
@@ -53,7 +53,7 @@ var widthOfMyImage: Int = 0
 var heightOfMyImage: Int = 0
 var x0OfMyImage: Float = 0f
 var y0OfMyImage: Float = 0f
-var heightOfField: Float = 8f
+var heightOfField: Float = 5f
 var heightOfBearing: Float = 4f
 var distanceToText: Float = 30f
 
@@ -130,7 +130,7 @@ class MyField(
 
        if (this.numberOfTheField == currentField) {
            // draw section
-           val xs: Float = x0OfMyImage+ (this.beginningOfTheField + distanceToSection) / scaleX
+           val xs: Float = x0 + distanceToSection / scaleX
            canvas.drawLine(xs, y0OfMyImage - 20, xs, y0OfMyImage + 20, paintOfTheSection)
        }
     }
@@ -203,7 +203,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun initFirstModel() {
         for (i in 0..3) {
-            field.add(MyField(10f, i*10f, 1f, i))
+            field.add(MyField(5f, i*5f, 1f, i))
         }
     }
 
@@ -212,8 +212,7 @@ class MainActivity : AppCompatActivity() {
         canvasClean()
 
         var sumLengthOfFields = 0f
-        val firstConsole: Int = if (!firstConsoleIsUsed) 1 else 0
-        for (i in firstConsole..numberOfFields) {
+        for (i in 1..numberOfFields) {
             sumLengthOfFields += field[i].lengthOfTheField
         }
         if (firstConsoleIsUsed) sumLengthOfFields += field[0].lengthOfTheField
@@ -235,6 +234,97 @@ class MainActivity : AppCompatActivity() {
         sendFunctionToPrecision()
         makeSpinner()
         initCanvas()
+        initCheckConsole()
+    }
+
+
+    private fun firstConsole() {
+        binding.chbConsoleBeginning?.setOnClickListener() {
+            if (binding.chbConsoleBeginning!!.isChecked) {
+                firstConsoleIsUsed = true
+                try {
+                    val p0: Float = LengthsInput[0].text.toString().toFloat()
+                    if (p0 > 0) {
+                        field[0].lengthOfTheField = p0
+                        field[0].beginningOfTheField = 0f
+                        LengthsInput[0].error = null
+                        sendBeginningOfTheField()
+                    } else {
+                        LengthsInput[0].error = getString(R.string.wrong)
+                    }
+                } catch (exception: NumberFormatException) {
+                    LengthsInput[0].error = getString(R.string.wrong)
+                }
+
+                try {
+                    val p0: Float = EIInput[0].text.toString().toFloat()
+                    if (p0 > 0) {
+                        field[0].EIofTheField = p0
+                        EIInput[0].error = null
+                    } else {
+                        EIInput[0].error = getString(R.string.wrong)
+                    }
+                } catch (exception: NumberFormatException) {
+                    EIInput[0].error = getString(R.string.wrong)
+                }
+
+                drawAll()
+            }
+            else {
+                firstConsoleIsUsed = false
+                drawAll()
+            }
+        }
+    }
+
+
+    private fun lastConsole() {
+
+        binding.chbConsoleEnd?.setOnClickListener() {
+            var l: Float
+            var l0: Float
+            var EI: Float
+            if (binding.chbConsoleEnd!!.isChecked) {
+                lastConsoleIsUsed = true
+                try {
+                    l = LengthsInput[numberOfFields + 1].text.toString().toFloat()
+                    if (l > 0) {
+                        l0 = field[numberOfFields].beginningOfTheField +
+                                field[numberOfFields].lengthOfTheField
+                        LengthsInput[numberOfFields + 1].error = null
+                    } else {
+                        LengthsInput[numberOfFields + 1].error = getString(R.string.wrong)
+                    }
+                } catch (exception: NumberFormatException) {
+                    LengthsInput[numberOfFields + 1].error = getString(R.string.wrong)
+                }
+
+                try {
+                    EI = EIInput[numberOfFields + 1].text.toString().toFloat()
+                    if (EI > 0) {
+                        EIInput[numberOfFields + 1].error = null
+                    } else {
+                        EIInput[numberOfFields + 1].error = getString(R.string.wrong)
+                    }
+                } catch (exception: NumberFormatException) {
+                    EIInput[numberOfFields + 1].error = getString(R.string.wrong)
+                }
+                if ((l > 0) and (l0 > 0) and (EI > 0)) {
+                    field.add(MyField(l, l0, EI, numberOfFields + 1))
+                    drawAll()
+                }
+            }
+            else {
+                lastConsoleIsUsed = false
+                drawAll()
+            }
+        }
+    }
+
+
+    private fun initCheckConsole() {
+        firstConsole()
+        lastConsole()
     }
 
 
@@ -275,7 +365,7 @@ class MainActivity : AppCompatActivity() {
 
         paintField = Paint()
         paintField.color = ContextCompat.getColor(this, R.color.field)
-        paintField.strokeWidth = 8F
+        paintField.strokeWidth = 10F
         paintField.textSize = textSize
         paintField.textAlign = Paint.Align.CENTER
         paintField.style = Paint.Style.STROKE
@@ -343,6 +433,7 @@ class MainActivity : AppCompatActivity() {
                 id: Long) {
 
                 currentField = arrayOfNumbersFields[position]
+                drawAll()
             }
 
             override fun onNothingSelected(p0: AdapterView<*>?) {
@@ -894,7 +985,7 @@ class MainActivity : AppCompatActivity() {
                     if (p0.toString().toFloat()>0){
                         when (lengthIEorSprings) {
                             "length" -> { field[index].lengthOfTheField = p0.toString().toFloat()
-                                    sendBeginningOfTheField () }
+                                    sendBeginningOfTheField() }
                             "EI"    ->  {field[index].EIofTheField = p0.toString().toFloat()
                             }
                             "springs" -> {
@@ -1008,10 +1099,11 @@ class MainActivity : AppCompatActivity() {
 
             arrayOfNumbersFields.add(enableNumberOfField)
 
-            makeNeuDateOfField()
+            makeNeuDateOfField(enableNumberOfField)
             drawAll()
         }
     }
+
 
     private fun makeNeuDateOfField(numberOfNeuField: Int) {
         var l: Float
@@ -1073,7 +1165,7 @@ class MainActivity : AppCompatActivity() {
                     currentGraph = "R$numberOfGraph"
                 }
             }
-            field.removeAt(numberOfFields)
+            field.removeAt(unEnableNumberOfField)
             drawAll()
         }
     }
