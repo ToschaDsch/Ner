@@ -18,6 +18,7 @@ import com.example.ner.databinding.ActivityMainBinding
 
 var numberOfFields: Int = 3
 var precisionOfFragmentation: Int = 6
+var shortestField: Float = 5f
 var arrayOfNumbersFields = arrayListOf(1, 2, 3)
 var firstConsoleIsUsed: Boolean = false
 var lastConsoleIsUsed: Boolean = false
@@ -80,9 +81,6 @@ class MyField(
     var numberOfTheField: Int
 ) {
 
-    //global n0, nn, n2 it is firstConsoleIsUsed, numberOfFields, lastConsoleIsUsed
-    // l1: float = 1, l01: float = 1, ei1: float = 1, i1: float = 0, **kwargs: object)
-
     fun drawOneField() { // it really draws one field
 
         //global nn, kmas, t0, Y0, c_beg, c_end, n_sec, d_sec
@@ -101,81 +99,95 @@ class MyField(
             else -> { // an intermediate field
                 canvas.drawLine(
                     x0,y0OfMyImage + heightOfField,
-                    xn,y0OfMyImage + heightOfField,
+                    xn, y0OfMyImage + heightOfField,
                     paintField
                 )
-                canvas.drawLine(
-                    x0,y0OfMyImage,
-                    xn, y0OfMyImage,
-                    paintField
-                )
+                // draw text for the field
+                var str1: String = 'l' + this.numberOfTheField.toString()
+                canvas.drawText(str1, (x0 + xn) / 2, y0OfMyImage - distanceToText, paintTextField)
+                // draw bearings at the beginning of the field
+                canvas.drawCircle(x0,
+                    (y0OfMyImage + 1.5*heightOfField + heightOfBearing).toFloat(), heightOfBearing, paintBearing)
+                str1 = 's' + (this.numberOfTheField - 1).toString()
+                // draw text to bearing at the beginning of thr field
+                canvas.drawText(str1, x0, y0OfMyImage + distanceToText + textSize, paintTextBearing)
+                // draw text to bearing at the end of thr field
+                str1 = "s" +this.numberOfTheField.toString()
+                canvas.drawText(str1, xn,
+                    y0OfMyImage + distanceToText + textSize, paintTextBearing)
+                // draw bearings at the end of the field
+                canvas.drawCircle(xn,
+                    (y0OfMyImage + 1.5*heightOfField + heightOfBearing).toFloat(), heightOfBearing, paintBearing)
             }
         }
-        // draw text for the field
-        var str1: String = 'l' + this.numberOfTheField.toString()
-        canvas.drawText(str1, (x0 + xn) / 2, y0OfMyImage - distanceToText, paintTextField)
-        // draw bearings at the beginning of the field
-       canvas.drawCircle(x0,
-           y0OfMyImage + heightOfField + heightOfBearing, heightOfBearing, paintBearing)
-        str1 = 's' + (this.numberOfTheField - 1).toString()
-        // draw text to bearing at the beginning of thr field
-       canvas.drawText(str1, x0, y0OfMyImage + distanceToText + textSize, paintTextBearing)
-        // draw text to bearing at the end of thr field
-       str1 = "s" +this.numberOfTheField.toString()
-        canvas.drawText(str1, xn,
-            y0OfMyImage + distanceToText + textSize, paintTextBearing)
-        // draw bearings at the end of the field
-        canvas.drawCircle(xn,
-            y0OfMyImage + heightOfField + heightOfBearing, heightOfBearing, paintBearing)
+        // draw a line above
+        canvas.drawLine(
+            x0,y0OfMyImage,
+            xn,y0OfMyImage,
+            paintField
+        )
 
-       if (this.numberOfTheField == currentField) {
-           // draw section
-           val xs: Float = x0 + distanceToSection / scaleX
-           canvas.drawLine(xs, y0OfMyImage - 20, xs, y0OfMyImage + 20, paintOfTheSection)
-       }
+        if (this.numberOfTheField == currentField) {
+            // draw section
+            val xs: Float = x0 + distanceToSection / scaleX
+            canvas.drawLine(xs, y0OfMyImage - 20,
+                xs, y0OfMyImage + heightOfField + 20, paintOfTheSection)
+        }
     }
+
 
     fun fragmentationOfOneField() {  // make fragmentation of the field
-        /*
-        global d_sec, dmin, n_sec, xg, mg, qg, dg
-        dfi = int(self.__l1 / dmin)
-        df = self.__l1 / dfi
+        val dfi: Int = (this.lengthOfTheField / shortestField * precisionOfFragmentation).toInt()
+        val df: Float = this.lengthOfTheField / dfi
 
-        x = [0] * (dfi + 1)
-        x[0] = 0
-        i = 0
-        for i in range(1, dfi + 1):
-        x[i] = x[i - 1] + df
-        x[i] = x[i - 1] + df - 0.0001
-        x.insert(1, 0.0001)
+        val x: ArrayList<Float> = arrayListOf(0f)
 
-        check1 = 0
-        if self.__i1 == n_sec:  # the section is in the field
-        for i in range(1, len(x)):
-        if x[i] == d_sec:
-        x.insert(i + 1, d_sec + 0.0001)
-        check1 = 1
-        break
-        if check1 == 0:
-        for i in range(1, len(x)):
-        if x[i - 1] < d_sec < x[i]:
-        x.insert(i, d_sec)
-        x.insert(i + 1, d_sec + 0.0001)
-        break
+        for (i in 1..dfi) {
+            x.add(x[i - 1] + df)
+        }
+            x.add((x[dfi] + df - 0.0001f).toFloat())
 
-        # draw it
-                for i in range(len(x)):
-        xi = int((600 - B0) / 2 + (self.__l01 + x[i]) / kmas)
-        canv.create_line(xi, Y0 - 5, xi, Y0)
+        var check1: Int = 0
+        if (this.numberOfTheField == currentField) {  // the section is in the field
+            for (i in 0 until x.size) {
+                if (x[i] == distanceToSection) {
+                    x.add(i + 1, (distanceToSection + 0.0001).toFloat())
+                    check1 = 1
+                    break
+                }
+            }
+        }
+        if (check1 == 0) {
+            for (i in 1 until x.size) {
+                if ((x[i - 1] < distanceToSection) and (distanceToSection < x[i])) {
+                    x.add(i, distanceToSection)
+                    x.add(i + 1, (distanceToSection + 0.0001).toFloat())
+                    break
+                }
+            }
+        }
 
-        for i in range(len(x)):
-        solve_it(x[i], self.__i1)
+        // draw it
+        var xi: Float = 0f
+        val l0: Float = if (firstConsoleIsUsed) 0f else field[0].lengthOfTheField
+        for (i in x) {
+            xi = x0OfMyImage + ((this.beginningOfTheField + i - l0) / scaleX)
+            canvas.drawLine(xi, y0OfMyImage - heightOfField, xi, y0OfMyImage, paintOfTheSection)
+        }
 
-        if self.__i1 == nn + n2:  # the last point
-        solve_it(self.__l1, self.__i1)
+        for (xi in x) {
+            solveIt(xi, this.numberOfTheField)
+        }
 
-         */
+        if (this.numberOfTheField == numberOfTheField + 1) { //# the last point
+            solveIt(this.lengthOfTheField, this.numberOfTheField)
+        }
     }
+}
+
+
+private fun solveIt(xi: Float, currentNumberOfTheField: Int) {
+
 }
 
 
@@ -186,6 +198,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var checkSprings: CheckBox
 
     lateinit var binding : ActivityMainBinding
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -200,6 +213,20 @@ class MainActivity : AppCompatActivity() {
         drawAll()
     }
 
+    override fun onResume() {
+        super.onResume()
+        hideSystemUI()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        hideSystemUI()
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        hideSystemUI()
+    }
 
     private fun initFirstModel() {
         for (i in 0..3) {
@@ -210,7 +237,26 @@ class MainActivity : AppCompatActivity() {
 
     private fun drawAll() {
         canvasClean()
+        drawAllFields()
+        minField()
 
+    }
+
+
+    private fun minField() {
+        val firstNumber: Int = if (firstConsoleIsUsed) 0 else 1
+        val lastNumber: Int = if (lastConsoleIsUsed) 1 else 0
+
+        shortestField = field[firstNumber + 1].lengthOfTheField
+        for (i in firstNumber + 1..numberOfFields + lastNumber) {
+            if (field[i].lengthOfTheField < shortestField) {
+                shortestField = field[i].lengthOfTheField
+            }
+        }
+    }
+
+
+    private fun drawAllFields() {
         var sumLengthOfFields = 0f
         for (i in 1..numberOfFields) {
             sumLengthOfFields += field[i].lengthOfTheField
@@ -219,12 +265,18 @@ class MainActivity : AppCompatActivity() {
         if (lastConsoleIsUsed) sumLengthOfFields += field[numberOfFields+1].lengthOfTheField
         scaleX =  sumLengthOfFields / widthOfMyImage
 
-        if (firstConsoleIsUsed) field[0].drawOneField()
+        if (firstConsoleIsUsed) {
+            field[0].drawOneField()
+            field[0].fragmentationOfOneField()
+        }
         for (i in 1..numberOfFields) {
             field[i].drawOneField()
+            field[i].fragmentationOfOneField()
         }
-        if (lastConsoleIsUsed) field[numberOfFields+1].drawOneField()
-
+        if (lastConsoleIsUsed) {
+            field[numberOfFields+1].drawOneField()
+            field[numberOfFields+1].fragmentationOfOneField()
+        }
     }
 
 
@@ -232,6 +284,7 @@ class MainActivity : AppCompatActivity() {
         sendFunctionToButtons()
         sendFunctionToCheckBoxes()
         sendFunctionToPrecision()
+        sendFunctionToDistance()
         makeSpinner()
         initCanvas()
         initCheckConsole()
@@ -267,11 +320,23 @@ class MainActivity : AppCompatActivity() {
                 } catch (exception: NumberFormatException) {
                     EIInput[0].error = getString(R.string.wrong)
                 }
-
+                NumbersOfTextView[0].isEnabled = true
+                LengthsInput[0].isEnabled = true
+                EIInput[0].isEnabled = true
+                arrayOfNumbersFields.add(0, 0)
                 drawAll()
             }
             else {
+                NumbersOfTextView[0].isEnabled = false
                 firstConsoleIsUsed = false
+                LengthsInput[0].isEnabled = false
+                EIInput[0].isEnabled = false
+                arrayOfNumbersFields.removeAt(0)
+                if (currentField == 0) {
+                    currentField = 1
+                    distanceToSection = (field[currentField].lengthOfTheField*0.5).toFloat()
+                    binding.textDistance?.setText(distanceToSection.toString())
+                }
                 drawAll()
             }
         }
@@ -279,7 +344,6 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun lastConsole() {
-
         binding.chbConsoleEnd?.setOnClickListener() {
             var l: Float
             var l0: Float
@@ -294,9 +358,15 @@ class MainActivity : AppCompatActivity() {
                         LengthsInput[numberOfFields + 1].error = null
                     } else {
                         LengthsInput[numberOfFields + 1].error = getString(R.string.wrong)
+                        l0 = 0f
+                        l = 0f
+                        EI = 0f
                     }
                 } catch (exception: NumberFormatException) {
                     LengthsInput[numberOfFields + 1].error = getString(R.string.wrong)
+                    l0 = 0f
+                    l = 0f
+                    EI = 0f
                 }
 
                 try {
@@ -305,17 +375,34 @@ class MainActivity : AppCompatActivity() {
                         EIInput[numberOfFields + 1].error = null
                     } else {
                         EIInput[numberOfFields + 1].error = getString(R.string.wrong)
+                        l0 = 0f
+                        l = 0f
+                        EI = 0f
                     }
                 } catch (exception: NumberFormatException) {
                     EIInput[numberOfFields + 1].error = getString(R.string.wrong)
+                    l0 = 0f
+                    l = 0f
+                    EI = 0f
                 }
                 if ((l > 0) and (l0 > 0) and (EI > 0)) {
                     field.add(MyField(l, l0, EI, numberOfFields + 1))
-                    drawAll()
                 }
+                LengthsInput[numberOfFields + 1].isEnabled = true
+                EIInput[numberOfFields + 1].isEnabled = true
+                arrayOfNumbersFields.add(numberOfFields + 1)
+                drawAll()
             }
             else {
                 lastConsoleIsUsed = false
+                LengthsInput[numberOfFields + 1].isEnabled = false
+                EIInput[numberOfFields + 1].isEnabled = false
+                arrayOfNumbersFields.removeAt(numberOfFields)
+                if (currentField == numberOfFields + 1) {
+                    currentField = numberOfFields
+                    distanceToSection = (field[currentField].lengthOfTheField*0.5).toFloat()
+                    binding.textDistance?.setText(distanceToSection.toString())
+                }
                 drawAll()
             }
         }
@@ -327,6 +414,39 @@ class MainActivity : AppCompatActivity() {
         lastConsole()
     }
 
+
+    private fun sendFunctionToDistance() {
+        binding.textDistance?.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        binding.textDistance?.imeOptions = 1
+        binding.textDistance?.addTextChangedListener(object: TextWatcher {
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+            }
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+
+            }
+            override fun afterTextChanged(p0: Editable?) {
+                checkTheDistance()
+            }
+        })
+    }
+
+
+    private fun checkTheDistance() {
+        try {
+            val distance: Float = binding.textDistance?.text.toString().toFloat()
+            if ((distance >= 0) and (distance <= field[currentField].lengthOfTheField)){
+                distanceToSection = distance
+                binding.textDistance!!.error = null
+                drawAll()
+            }
+            else {
+                distanceToSection = (field[currentField].lengthOfTheField*0.5).toFloat()
+            }
+        }
+        catch (exception: NumberFormatException) {
+            binding.textDistance!!.error = getString(R.string.wrong)
+        }
+    }
 
     private fun sendFunctionToPrecision() {
         binding.textPrecision?.inputType = InputType.TYPE_CLASS_NUMBER
@@ -467,12 +587,15 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun hideSystemUI() {
+        /*
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).let { controller ->
             controller.hide(WindowInsetsCompat.Type.systemBars())
             controller.systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
+
+         */
     }
 
 
@@ -1049,6 +1172,10 @@ class MainActivity : AppCompatActivity() {
         for (index in 1..numberOfFields) {
             field[index].beginningOfTheField = field[index-1].beginningOfTheField +
                     field[index-1].lengthOfTheField
+        }
+        if (lastConsoleIsUsed) {
+            field[numberOfFields + 1].beginningOfTheField = field[numberOfFields].beginningOfTheField +
+                    field[numberOfFields].lengthOfTheField
         }
     }
 
