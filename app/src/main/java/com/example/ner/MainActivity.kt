@@ -11,10 +11,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.text.isDigitsOnly
 import com.example.ner.databinding.ActivityMainBinding
+import java.lang.Float.max
 
 var numberOfFields: Int = 3
 var precisionOfFragmentation: Int = 6
@@ -25,6 +24,15 @@ var lastConsoleIsUsed: Boolean = false
 var currentField: Int = 1
 var distanceToSection: Float = 2.5f
 var currentGraph: String = "M"
+var firstNumber: Int = 1
+var lastNumber: Int = 3
+
+// coordinate for all cases
+var xg: ArrayList<Float> = ArrayList()
+var mg: ArrayList<Float> = ArrayList()
+var qg: ArrayList<Float> = ArrayList()
+var dg: ArrayList<Float> = ArrayList()
+var rg: ArrayList<Float> = ArrayList()
 
 var field: ArrayList<MyField> = ArrayList()
 
@@ -88,6 +96,11 @@ class MyField(
                 else  x0OfMyImage + (this.beginningOfTheField - field[0].lengthOfTheField)/ scaleX
         val xn: Float = x0 + this.lengthOfTheField / scaleX
 
+        var str1: String = 'l' + this.numberOfTheField.toString()
+        // draw text for the field
+        canvas.drawText(str1, (x0 + xn) / 2, y0OfMyImage - distanceToText, paintTextField)
+
+
         // draw a field
         when (this.numberOfTheField) {
             0 -> { // console at the beginning
@@ -102,9 +115,8 @@ class MyField(
                     xn, y0OfMyImage + heightOfField,
                     paintField
                 )
-                // draw text for the field
-                var str1: String = 'l' + this.numberOfTheField.toString()
-                canvas.drawText(str1, (x0 + xn) / 2, y0OfMyImage - distanceToText, paintTextField)
+
+
                 // draw bearings at the beginning of the field
                 canvas.drawCircle(x0,
                     (y0OfMyImage + 1.5*heightOfField + heightOfBearing).toFloat(), heightOfBearing, paintBearing)
@@ -120,6 +132,7 @@ class MyField(
                     (y0OfMyImage + 1.5*heightOfField + heightOfBearing).toFloat(), heightOfBearing, paintBearing)
             }
         }
+
         // draw a line above
         canvas.drawLine(
             x0,y0OfMyImage,
@@ -142,10 +155,10 @@ class MyField(
 
         val x: ArrayList<Float> = arrayListOf(0f)
 
-        for (i in 1..dfi) {
+        for (i in 1 until dfi) {
             x.add(x[i - 1] + df)
         }
-            x.add((x[dfi] + df - 0.0001f).toFloat())
+            x.add((x[dfi-1] + df - 0.0001f).toFloat())
 
         var check1: Int = 0
         if (this.numberOfTheField == currentField) {  // the section is in the field
@@ -156,18 +169,19 @@ class MyField(
                     break
                 }
             }
-        }
-        if (check1 == 0) {
-            for (i in 1 until x.size) {
-                if ((x[i - 1] < distanceToSection) and (distanceToSection < x[i])) {
-                    x.add(i, distanceToSection)
-                    x.add(i + 1, (distanceToSection + 0.0001).toFloat())
-                    break
+
+            if (check1 == 0) {
+                for (i in 1 until x.size) {
+                    if ((x[i - 1] < distanceToSection) and (distanceToSection < x[i])) {
+                        x.add(i, distanceToSection)
+                        x.add(i + 1, (distanceToSection + 0.0001).toFloat())
+                        break
+                    }
                 }
             }
         }
 
-        // draw it
+        // draw fragmentation
         var xi: Float = 0f
         val l0: Float = if (firstConsoleIsUsed) 0f else field[0].lengthOfTheField
         for (i in x) {
@@ -185,6 +199,50 @@ class MyField(
     }
 }
 
+
+private fun drawGraph(theGraphIs: String) {
+    // draw the graf
+    //global xg, mg, qg, dg, d_sec, n_sec, rg
+
+    //canv.delete("all")
+
+    val nameOfInfluenceLine = "influence line $theGraphIs"
+    canvas.drawText(nameOfInfluenceLine, 20f, heightOfMyImage - 50f, paintTextMyMessage)
+
+    when (theGraphIs) {
+        "M" ->  drawTheGraphic(mg)  //draw moment
+        "Q" ->  drawTheGraphic(qg)  //draw shear
+        "d" ->  drawTheGraphic(dg)  //draw deformation
+        else -> {val k: Int = theGraphIs.substring(1).toInt()
+            //drawTheGraphic(rg[k])     FIXME
+        }
+    }
+}
+
+
+private fun drawTheGraphic(listOfOrdinate: ArrayList<Float>) {
+    val ymax: Float? = listOfOrdinate.maxByOrNull { it }
+    var ymin: Float? = listOfOrdinate.minByOrNull { it }
+    if (ymin!! < 0f) {
+        ymin = - ymin
+    }
+
+    scaleY = if (ymax!! > ymin) heightOfMyImage/ ymax else heightOfMyImage/ymin
+    for (i in 1 until xg.size) {
+        canvas.drawLine(
+            x0OfMyImage + xg[i - 1] / scaleX, y0OfMyImage,
+            x0OfMyImage+ xg[i - 1] / scaleX, y0OfMyImage - listOfOrdinate[i - 1] * scaleY,
+            paintGraph)
+        canvas.drawLine(
+            x0OfMyImage+ xg[i - 1] / scaleX, y0OfMyImage - listOfOrdinate[i - 1] * scaleY,
+            x0OfMyImage + xg[i] / scaleX, y0OfMyImage - listOfOrdinate[i] * scaleY,
+            paintGraph)
+        canvas.drawLine(
+            x0OfMyImage + xg[i] / scaleX, y0OfMyImage - listOfOrdinate[i] * scaleY,
+        x0OfMyImage + xg[i] / scaleX, y0OfMyImage,
+            paintGraph)
+    }
+}
 
 private fun solveIt(xi: Float, currentNumberOfTheField: Int) {
 
@@ -244,11 +302,11 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun minField() {
-        val firstNumber: Int = if (firstConsoleIsUsed) 0 else 1
-        val lastNumber: Int = if (lastConsoleIsUsed) 1 else 0
+        firstNumber = if (firstConsoleIsUsed) 0 else 1
+        lastNumber = if (lastConsoleIsUsed) numberOfFields + 1 else numberOfFields + 0
 
         shortestField = field[firstNumber + 1].lengthOfTheField
-        for (i in firstNumber + 1..numberOfFields + lastNumber) {
+        for (i in firstNumber + 1..lastNumber) {
             if (field[i].lengthOfTheField < shortestField) {
                 shortestField = field[i].lengthOfTheField
             }
