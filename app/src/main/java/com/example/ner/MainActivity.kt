@@ -11,9 +11,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.core.content.ContextCompat
-import androidx.core.text.isDigitsOnly
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.example.ner.databinding.ActivityMainBinding
-import java.lang.Float.max
 
 var numberOfFields: Int = 3
 var precisionOfFragmentation: Int = 6
@@ -32,9 +33,9 @@ var xg: ArrayList<Float> = ArrayList()
 var mg: ArrayList<Float> = ArrayList()
 var qg: ArrayList<Float> = ArrayList()
 var dg: ArrayList<Float> = ArrayList()
-var rg: ArrayList<Float> = ArrayList()
+var rg =  ArrayList<ArrayList<Float>>()
 
-var field: ArrayList<MyField> = ArrayList()
+var f: ArrayList<MyField> = ArrayList()
 
 var widthOfApp: Int = 0
 var heightOfApp: Int = 0
@@ -83,18 +84,18 @@ data class Reaction( // # tables of data for reactions
 
 
 class MyField(
-    var lengthOfTheField: Float,
-    var beginningOfTheField: Float,
-    var EIofTheField: Float,
+    var l1: Float,  // lehgth of the field
+    var l0: Float,  // beginning of the field
+    var EI: Float,  //  stiffness of the field
     var numberOfTheField: Int
 ) {
 
     fun drawOneField() { // it really draws one field
 
         //global nn, kmas, t0, Y0, c_beg, c_end, n_sec, d_sec
-        val x0: Float = if (firstConsoleIsUsed) x0OfMyImage + this.beginningOfTheField / scaleX
-                else  x0OfMyImage + (this.beginningOfTheField - field[0].lengthOfTheField)/ scaleX
-        val xn: Float = x0 + this.lengthOfTheField / scaleX
+        val x0: Float = if (firstConsoleIsUsed) x0OfMyImage + this.l0 / scaleX
+                else  x0OfMyImage + (this.l0 - f[0].l1)/ scaleX
+        val xn: Float = x0 + this.l1 / scaleX
 
         var str1: String = 'l' + this.numberOfTheField.toString()
         // draw text for the field
@@ -150,17 +151,17 @@ class MyField(
 
 
     fun fragmentationOfOneField() {  // make fragmentation of the field
-        val dfi: Int = (this.lengthOfTheField / shortestField * precisionOfFragmentation).toInt()
-        val df: Float = this.lengthOfTheField / dfi
+        val dfi: Int = (this.l1 / shortestField * precisionOfFragmentation).toInt()
+        val df: Float = this.l1 / dfi
 
         val x: ArrayList<Float> = arrayListOf(0f)
 
         for (i in 1 until dfi) {
             x.add(x[i - 1] + df)
         }
-            x.add((x[dfi-1] + df - 0.0001f).toFloat())
+            x.add(x[dfi-1] + df - 0.0001f)
 
-        var check1: Int = 0
+        var check1 = 0
         if (this.numberOfTheField == currentField) {  // the section is in the field
             for (i in 0 until x.size) {
                 if (x[i] == distanceToSection) {
@@ -182,30 +183,25 @@ class MyField(
         }
 
         // draw fragmentation
-        var xi: Float = 0f
-        val l0: Float = if (firstConsoleIsUsed) 0f else field[0].lengthOfTheField
+        var xi: Float
+        val l0: Float = if (firstConsoleIsUsed) 0f else f[0].l1
         for (i in x) {
-            xi = x0OfMyImage + ((this.beginningOfTheField + i - l0) / scaleX)
+            xi = x0OfMyImage + ((this.l0 + i - l0) / scaleX)
             canvas.drawLine(xi, y0OfMyImage - heightOfField, xi, y0OfMyImage, paintOfTheSection)
         }
 
-        for (xi in x) {
-            solveIt(xi, this.numberOfTheField)
+        for (i in x) {
+            solveIt(i, this.numberOfTheField)
         }
 
         if (this.numberOfTheField == numberOfTheField + 1) { //# the last point
-            solveIt(this.lengthOfTheField, this.numberOfTheField)
+            solveIt(this.l1, this.numberOfTheField)
         }
     }
 }
 
 
 private fun drawGraph(theGraphIs: String) {
-    // draw the graf
-    //global xg, mg, qg, dg, d_sec, n_sec, rg
-
-    //canv.delete("all")
-
     val nameOfInfluenceLine = "influence line $theGraphIs"
     canvas.drawText(nameOfInfluenceLine, 20f, heightOfMyImage - 50f, paintTextMyMessage)
 
@@ -214,7 +210,7 @@ private fun drawGraph(theGraphIs: String) {
         "Q" ->  drawTheGraphic(qg)  //draw shear
         "d" ->  drawTheGraphic(dg)  //draw deformation
         else -> {val k: Int = theGraphIs.substring(1).toInt()
-            //drawTheGraphic(rg[k])     FIXME
+            drawTheGraphic(rg[k])   // draw a reaction
         }
     }
 }
@@ -246,6 +242,270 @@ private fun drawTheGraphic(listOfOrdinate: ArrayList<Float>) {
 
 private fun solveIt(xi: Float, currentNumberOfTheField: Int) {
 
+    //def solve_it(x1, n1):  # solve the system
+    //global nn, d_sec, n_sec, n0, xg, mg, qg, dg, spr
+    val numberX: Int = numberOfFields - 1
+    var stiffnessTensor = ArrayList<Float>(numberX) //stiffness tensor
+
+    var rx: Array<Float> = Array(numberOfFields)       // coefficients for bearings
+
+    var dx: Float = 0f
+
+    //FIX k_ber
+
+    for (i in numberX) {   //# make dii
+        stiffnessTensor[i][i] = f[i + 1].l1 / (3 * f[i + 1].ei1) + f[i + 2].l1 / (3 * f[i + 2].ei1) +
+            1 / f[i + 1].l1 ** 2 * k_ber[i] + (1 / f[i + 1].l1 + 1 / f[i + 2].l1) ** 2 * k_ber[i + 1] +
+            1 / f[i + 2].l1 ** 2 * k_ber[i + 2]
+
+        if (i == 0 and currentField == 1) {// the first field
+            matr[0][nn - 1] = -(f[1].l1 - x1) * x1 * (f[1].l1 + x1) / (6 * f[1].ei1 * f[1].l1) -
+                    (1 - x1 / f[1].l1) / f[1].l1 * k_ber[0] +
+                    (1 / f[1].l1 + 1 / f[2].l1) * x1 / f[1].l1 * k_ber[1]
+        }
+    }
+    if nn > 2:
+    matr[1][nn - 1] = - 1 / f[2].l1 * x1 / f[1].l1 * k_ber[1]
+    elif n1 == nn and i == nn - 2:  # the last field
+    matr[nn - 2][nn - 1] = -(2 * f[nn].l1 - x1) * x1 * (f[nn].l1 - x1) / (6 * f[nn].ei1 * f[nn].l1) \
+    - (x1 / f[nn].l1) / f[nn].l1 * k_ber[nn] \
+    + (1 - x1 / f[nn].l1) * (1 / f[nn].l1 + 1 / f[nn - 1].l1) * k_ber[nn - 1]
+    if nn > 2:
+    matr[nn - 3][nn - 1] = - 1 / f[nn - 1].l1 * k_ber[nn - 1] * (1 - x1 / f[nn].l1)
+    elif n1 == 0 and i == 0:  # there is a console at the beginning
+    matr[0][nn - 1] = (f[0].l1 - x1) * f[1].l1 / (6 * f[1].ei1) \
+    - (f[0].l1 - x1 + f[1].l1) / f[1].l1 / f[1].l1 * k_ber[0] \
+    - (1 / f[1].l1 + 1 / f[2].l1) * (f[0].l1 - x1) / f[1].l1 * k_ber[1]
+    if nn > 2:
+    matr[1][nn - 1] = (f[0].l1 - x1) / f[1].l1 * k_ber[1] / f[2].l1
+    elif n1 == nn + 1:  # there is a console at the end
+    matr[nn - 2][nn - 1] = x1 * f[nn].l1 / (6 * f[nn].ei1) \
+    - (x1 + f[nn].l1) / f[nn].l1 / f[nn].l1 * k_ber[nn] \
+    - (x1 / f[nn].l1) * (1 / f[nn].l1 + 1 / f[nn - 1].l1) * k_ber[nn - 1]
+    if nn > 2:
+    matr[nn - 3][nn - 1] = x1 / f[nn].l1 / f[nn - 1].l1 * k_ber[nn - 1]
+    else:  # GENERAL CASE
+    if i == n1 - 2:  # xi is left
+    matr[i][nn - 1] = -(2 * f[n1].l1 - x1) * x1 * (f[n1].l1 - x1) / (6 * f[n1].ei1 * f[n1].l1) \
+    + (1 - x1 / f[n1].l1) * (1 / f[n1].l1 + 1 / f[n1 - 1].l1) * k_ber[n1 - 1] \
+    - x1 / f[n1].l1 / f[n1].l1 * k_ber[n1]
+    if nn - 1 > n1 > 1:
+    matr[i + 2][nn - 1] = - x1 / f[n1].l1 * k_ber[n1] / f[n1 + 1].l1
+    elif i == n1 - 1:  # xi is right
+    matr[i][nn - 1] = -(f[n1].l1 + x1) * x1 * (f[n1].l1 - x1) / (6 * f[n1].ei1 * f[n1].l1) \
+    - (1 - x1 / f[n1].l1) / f[n1].l1 * k_ber[n1 - 1] \
+    + x1 / f[n1].l1 * (1 / f[n1].l1 + 1 / f[n1 + 1].l1) * k_ber[n1]
+    if 2 < n1 < nn:
+    matr[i - 2][nn - 1] = - (1 - x1 / f[n1].l1) * k_ber[n1 - 1] / f[n1 - 1].l1
+
+    if nn != 1:  # you need xi, 2 and more fields
+    for i in range(nn - 2):  # make d21, d21 et cetera
+    matr[i][i + 1] = matr[i + 1][i] = f[i + 2].l1 / (6 * f[i + 2].ei1) \
+    - (1 / f[i + 1].l1 + 1 / f[i + 2].l1) / f[i + 2].l1 * k_ber[i + 1] \
+    - (1 / f[i + 2].l1 + 1 / f[i + 3].l1) / f[i + 3].l1 * k_ber[i + 2]
+    for i in range(nn - 3):  # d13, 31 et cetera
+    matr[i][i + 2] = matr[i + 2][i] = 1 / f[i + 2].l1 / f[i + 3].l1 * k_ber[i + 2]
+
+    matr = gaussPivotFunc(np.array(matr))
+    xx = [0 for i in range(nn - 1)]
+    for i in range(nn - 1):
+    xx[i] = matr[i][nn - 1]
+
+    if n_sec == 1:  # the first field
+    if n0 == 0 and n1 == 0:  # there is a console at the beginning
+    mx = - d_sec / f[1].l1 * xx[0] + (f[0].l1 - x1) * (f[1].l1 - d_sec) / f[1].l1
+    qx = -(xx[0] / f[1].l1 + (f[0].l1 - x1) / f[1].l1)
+    dx = -(f[1].l1 - d_sec) * d_sec * (f[1].l1 + d_sec) / (6 * f[1].ei1 * f[1].l1) * xx[0] \
+    + (2 * f[1].l1 - d_sec) * d_sec * (f[1].l1 - d_sec) / (6 * f[1].ei1 * f[1].l1) * (f[0].l1 - x1)
+    else:  # there is no console
+    mx = - d_sec / f[1].l1 * xx[0]  # + M
+    qx = -(xx[0] / f[1].l1)
+    dx = -(f[1].l1 - d_sec) * d_sec * (f[1].l1 + d_sec) / (6 * f[1].ei1 * f[1].l1) * xx[0]
+    elif n_sec == nn:  # the last field
+    if n2 == 1 and n1 == nn + 1:  # there is a console at the end
+    mx = -((f[nn].l1 - d_sec) / f[nn].l1 * xx[nn - 2] - x1 * d_sec / f[nn].l1)
+    qx = (xx[nn - 2] / f[nn].l1 + x1 / f[nn].l1)
+    dx = -(2 * f[nn].l1 - d_sec) * d_sec * (f[nn].l1 - d_sec) / (6 * f[nn].ei1 * f[nn].l1) * xx[nn - 2] \
+    + (f[nn].l1 - d_sec) * d_sec * (f[nn].l1 + d_sec) / (6 * f[nn].ei1 * f[nn].l1) * x1
+    else:  # there is no console at the end
+    mx = -((f[nn].l1 - d_sec) / f[nn].l1 * xx[nn - 2])  # + M
+    qx = (xx[nn - 2] / f[nn].l1)
+    dx = -(2 * f[nn].l1 - d_sec) * d_sec * (f[nn].l1 - d_sec) / (6 * f[nn].ei1 * f[nn].l1) * xx[nn - 2]
+    elif n_sec == 0:  # there is a console at the beginning, GENERAL CASE
+    mx = 0
+    qx = 0
+    dx = (f[0].l1 - d_sec) * f[1].l1 * xx[0] / (6 * f[1].ei1)
+    elif n_sec == nn + 1:  # there is a console at the end, GENERAL CASE
+    mx = 0
+    qx = 0
+    dx = d_sec * f[nn].l1 * xx[nn - 2] / (6 * f[nn].ei1)
+    else:  # an intermediate field, GENERAL CASE
+    mx = -(d_sec / f[n_sec].l1 * xx[n_sec - 1] + (f[n_sec].l1 - d_sec) / f[n_sec].l1 * xx[n_sec - 2])  # + M
+    qx = (-1 / f[n_sec].l1 * xx[n_sec - 1] + 1 / f[n_sec].l1 * xx[n_sec - 2])
+    dx = -(f[n_sec].l1 - d_sec) * d_sec * (f[n_sec].l1 + d_sec) / (6 * f[n_sec].ei1 * f[n_sec].l1) * xx[
+            n_sec - 1] - \
+    + (2 * f[n_sec].l1 - d_sec) * d_sec * (f[n_sec].l1 - d_sec) / (6 * f[n_sec].ei1 * f[n_sec].l1) * xx[
+            n_sec - 2]
+    else:  # (nn == 1)  # one field
+    if n1 == 0 and n_sec == 1:  # the last is on the console at the beginning
+    mx = (f[0].l1 - x1) * (f[1].l1 - d_sec) / f[1].l1
+    qx = -(f[0].l1 - x1) / f[1].l1
+    dx = (2 * f[1].l1 - d_sec) * d_sec * (f[1].l1 - d_sec) / (6 * f[1].ei1 * f[1].l1) * (f[0].l1 - x1)
+    rx[0] = - (f[0].l1 - x1 + f[1].l1) / f[1].l1
+    rx[1] = (f[0].l1 - x1) / f[1].l1
+    elif n1 == 2 and n_sec == 1:  # the last is on the console on the end
+    mx = x1 * d_sec / f[1].l1
+    qx = x1 / f[1].l1
+    dx = (f[nn].l1 - d_sec) * d_sec * (f[nn].l1 + d_sec) / (6 * f[nn].ei1 * f[nn].l1) * x1
+    rx[1] = - (x1 + f[1].l1) / f[1].l1
+    rx[0] = x1 / f[1].l1
+    else:  # there is an intermediate field, the last is on the console
+    if n_sec == 0:  # the section is on the first field
+    if n1 == 1:  # last is on an intermediate  field
+    dx = (2 * f[1].l1 - x1) * x1 * (f[1].l1 - x1) * (f[0].l1 - d_sec) / (6 * f[1].l1 * f[1].ei1)
+    else:  # last is on the last field
+    dx = - x1 * (f[0].l1 - d_sec) * f[1].l1 / (6 * f[1].ei1)
+    elif n_sec == nn + 1:  # the section is on the last field
+    if n1 == 1:  # last is on an intermediate field
+    dx = (f[1].l1 + x1) * x1 * (f[1].l1 - x1) * d_sec / (6 * f[1].l1 * f[1].ei1)
+    else:  # last is on the first field
+    dx = - d_sec * (f[0].l1 - x1) * f[1].l1 / (6 * f[1].ei1)
+    mx = 0
+    qx = 0
+    rx[1] = - (x1 / f[1].l1)
+    rx[0] = - (1 - x1 / f[1].l1)
+
+    if n_sec == n1:  # + M0
+    if n1 == 0:  # there is a console at the beginning
+    if d_sec >= x1:
+    mx = -x1 + d_sec
+    qx = -1
+    dx = - ((f[0].l1 - x1) * (f[0].l1 - d_sec) * f[1].l1 / (3 * f[1].ei1) \
+    + ((f[0].l1 - x1) * 0.5 - (f[0].l1 - d_sec) / 6) * (f[0].l1 - d_sec) ** 2 / f[0].ei1)
+    else:
+    mx = 0
+    qx = 0
+    dx = - ((f[0].l1 - x1) * (f[0].l1 - d_sec) * f[1].l1 / (3 * f[1].ei1) \
+    + ((f[0].l1 - x1) * (f[0].l1 - d_sec) * 0.5 - (f[0].l1 - x1) ** 2 / 6) * (f[0].l1 - x1) / f[
+    0].ei1)
+    elif n1 == nn + 1:  # there is a console at the end
+    if x1 > d_sec:
+    mx = x1 - d_sec
+    qx = 1
+    dx = - x1 * d_sec * f[nn].l1 / (3 * f[nn].ei1) \
+    - (x1 * 0.5 - d_sec / 6) * d_sec ** 2 / f[nn + 1].ei1
+    else:  # x1 < d_sec
+    mx = 0
+    qx = 0
+    dx = - x1 * d_sec * f[nn].l1 / (3 * f[nn].ei1) \
+    - (x1 * d_sec * 0.5 - x1 ** 2 / 6) * x1 / f[nn + 1].ei1
+    else:  # there is an intermediate field, GENERAL CASE
+    if x1 <= d_sec:
+    mx = mx - (x1 * (f[n_sec].l1 - x1) / f[n_sec].l1) * (f[n_sec].l1 - d_sec) / (f[n_sec].l1 - x1)
+    qx = qx + x1 / f[n_sec].l1
+    b1 = f[n_sec].l1 - x1
+    dx = dx - b1 * d_sec / (6 * f[n_sec].ei1 * f[n_sec].l1) * (f[n_sec].l1 ** 2 - b1 ** 2 - d_sec ** 2) - (
+    d_sec - x1) ** 3 / (6 * f[n_sec].ei1)
+    else:  # x1 > d_sec
+    if x1 == 0 and n1 != 0:
+    mx = 0
+    qx = 0
+    dx = 0
+    else:
+    mx = mx - (x1 * (f[n_sec].l1 - x1) / f[n_sec].l1) * d_sec / x1
+    qx = qx - (f[n_sec].l1 - x1) / f[n_sec].l1
+    b1 = f[n_sec].l1 - x1
+    dx = dx - b1 * d_sec / (6 * f[n_sec].ei1 * f[n_sec].l1) * (f[n_sec].l1 ** 2 - b1 ** 2 - d_sec ** 2)
+
+    # + M0 2
+    if n_sec == 0 and n1 == 1 and nn != 1:
+    dx = dx + (2 * f[1].l1 - x1) * x1 * (f[1].l1 - x1) * (f[0].l1 - d_sec) / (
+            6 * f[1].l1 * f[1].ei1)  # the first field
+    if n_sec == nn + 1 and n1 == nn and nn != 1:
+    dx = dx + (f[nn].l1 + x1) * x1 * (f[nn].l1 - x1) * d_sec / (6 * f[nn].l1 * f[nn].ei1)  # the last field
+
+    # reactions
+    if nn > 1:
+    if n1 == 1:  # first field
+    rx[0] = - 1 + x1 / f[1].l1
+    rx[1] = - x1 / f[1].l1
+    elif n1 == nn:  # last field
+    rx[nn] = - x1 / f[nn].l1
+    rx[nn - 1] = - 1 + x1 / f[nn].l1
+    elif n1 == 0:  # we are on the first console
+    rx[0] = - (f[0].l1 - x1 + f[1].l1) / f[1].l1
+    rx[1] = (f[0].l1 - x1) / f[1].l1
+    elif n1 == nn + n2:  # we are on the last console
+    rx[nn] = -(f[nn].l1 + x1) / f[nn].l1
+    rx[nn - 1] = x1 / f[nn].l1
+    else:
+    rx[n1 - 1] = rx[n1 - 1] - 1 + x1 / f[n1].l1  # an intermediate field + M0
+    rx[n1] = rx[n1] - x1 / f[n1].l1
+
+    rx[0] = rx[0] - xx[0] / f[1].l1  # first field
+    rx[1] = rx[1] + xx[0] / f[1].l1
+    for i in range(2, nn):  # all intermediate fields, GENERAL CASE
+    rx[i - 1] = rx[i - 1] - xx[i - 1] / f[i].l1 + xx[i - 2] / f[i].l1
+    rx[i] = rx[i] + xx[i - 1] / f[i].l1 - xx[i - 2] / f[i].l1
+    rx[nn] = rx[nn] - xx[nn - 2] / f[nn].l1  # last field
+    rx[nn - 1] = rx[nn - 1] + xx[nn - 2] / f[nn].l1
+
+    xg.append(x1 + f[n1].l01)
+    mg.append(mx)
+    qg.append(qx)
+
+    if spr == 1:  # there are springs
+    if n_sec == 0:  # console at the beginning
+    dx = dx + inter1(k_ber[0] * rx[0], k_ber[1] * rx[1], f[1].l1, - (f[1].l1 + f[0].l1 - d_sec))
+    elif n_sec == nn + 1:  # console at the end
+    dx = dx + inter1(k_ber[nn - 1] * rx[nn - 1], k_ber[nn] * rx[nn], f[nn].l1, f[nn].l1 + d_sec)
+    else:  # general case
+    dx = dx + inter1(k_ber[n_sec - 1] * rx[n_sec - 1], k_ber[n_sec] * rx[n_sec], f[n_sec].l1, d_sec)
+    else:
+    if d_sec == 0 or d_sec == f[n_sec].l1:
+    dx = 0
+
+    dg.append(dx)
+    for i in range(0, nn + 1):
+    rg[i].append(rx[i])
+}
+
+private fun gaussPivotFunc(matrix: ArrayList<Float>){
+    for nrow in range(len(matrix)):
+    # nrow равен номеру строки
+    # np.argmax возвращает номер строки с максимальным элементом в уменьшенной матрице
+    # которая начинается со строки nrow.Поэтому нужно прибавить nrow к результату
+            pivot = nrow + np.argmax(abs(matrix[nrow:, nrow]))
+    if pivot != nrow:
+    # swap
+    # matrix[nrow], matrix[pivot] = matrix[pivot], matrix[nrow]-не работает.
+    # нужно переставлять строки именно так, как написано ниже
+    matrix[[nrow, pivot]] = matrix[[pivot, nrow]]
+    row = matrix[nrow]
+    divider = row[nrow]  # диагональный элемент
+    if abs(divider) < 1e-10:
+    # почти нуль на диагонали . Продолжать не имеет смысла, результат счёта неустойчив
+    raise ValueError (f"Матрица несовместна. Максимальный элемент в столбце {nrow}: {divider:.3g}")
+    # делим на диагональный элемент .
+    row /= divider
+    # теперь надо вычесть приведённую строку из всех нижележащих строчек
+    for lower_row in matrix[nrow + 1:]:
+    factor = lower_row[nrow]  # элемент строки в колонке nrow
+    lower_row -= factor * row  # вычитаем, чтобы получить ноль в колонке nrow
+    # приводим к диагональному виду
+            make_identity(matrix)
+    return matrix
+}
+
+
+private fun makeIdentity(matrix: ArrayList<Float>){s
+    # перебор строк в обратном порядке
+    for nrow in range(len(matrix) - 1, 0, -1):
+    row = matrix[nrow]
+    for upper_row in matrix[:nrow]:
+    factor = upper_row[nrow]
+    upper_row -= factor * row
+    return matrix
 }
 
 
@@ -288,7 +548,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun initFirstModel() {
         for (i in 0..3) {
-            field.add(MyField(5f, i*5f, 1f, i))
+            f.add(MyField(5f, i*5f, 1f, i))
         }
     }
 
@@ -305,10 +565,10 @@ class MainActivity : AppCompatActivity() {
         firstNumber = if (firstConsoleIsUsed) 0 else 1
         lastNumber = if (lastConsoleIsUsed) numberOfFields + 1 else numberOfFields + 0
 
-        shortestField = field[firstNumber + 1].lengthOfTheField
+        shortestField = f[firstNumber + 1].l1
         for (i in firstNumber + 1..lastNumber) {
-            if (field[i].lengthOfTheField < shortestField) {
-                shortestField = field[i].lengthOfTheField
+            if (f[i].l1 < shortestField) {
+                shortestField = f[i].l1
             }
         }
     }
@@ -317,23 +577,23 @@ class MainActivity : AppCompatActivity() {
     private fun drawAllFields() {
         var sumLengthOfFields = 0f
         for (i in 1..numberOfFields) {
-            sumLengthOfFields += field[i].lengthOfTheField
+            sumLengthOfFields += f[i].l1
         }
-        if (firstConsoleIsUsed) sumLengthOfFields += field[0].lengthOfTheField
-        if (lastConsoleIsUsed) sumLengthOfFields += field[numberOfFields+1].lengthOfTheField
+        if (firstConsoleIsUsed) sumLengthOfFields += f[0].l1
+        if (lastConsoleIsUsed) sumLengthOfFields += f[numberOfFields+1].l1
         scaleX =  sumLengthOfFields / widthOfMyImage
 
         if (firstConsoleIsUsed) {
-            field[0].drawOneField()
-            field[0].fragmentationOfOneField()
+            f[0].drawOneField()
+            f[0].fragmentationOfOneField()
         }
         for (i in 1..numberOfFields) {
-            field[i].drawOneField()
-            field[i].fragmentationOfOneField()
+            f[i].drawOneField()
+            f[i].fragmentationOfOneField()
         }
         if (lastConsoleIsUsed) {
-            field[numberOfFields+1].drawOneField()
-            field[numberOfFields+1].fragmentationOfOneField()
+            f[numberOfFields+1].drawOneField()
+            f[numberOfFields+1].fragmentationOfOneField()
         }
     }
 
@@ -356,8 +616,8 @@ class MainActivity : AppCompatActivity() {
                 try {
                     val p0: Float = LengthsInput[0].text.toString().toFloat()
                     if (p0 > 0) {
-                        field[0].lengthOfTheField = p0
-                        field[0].beginningOfTheField = 0f
+                        f[0].l1 = p0
+                        f[0].l0 = 0f
                         LengthsInput[0].error = null
                         sendBeginningOfTheField()
                     } else {
@@ -370,7 +630,7 @@ class MainActivity : AppCompatActivity() {
                 try {
                     val p0: Float = EIInput[0].text.toString().toFloat()
                     if (p0 > 0) {
-                        field[0].EIofTheField = p0
+                        f[0].EI = p0
                         EIInput[0].error = null
                     } else {
                         EIInput[0].error = getString(R.string.wrong)
@@ -392,7 +652,7 @@ class MainActivity : AppCompatActivity() {
                 arrayOfNumbersFields.removeAt(0)
                 if (currentField == 0) {
                     currentField = 1
-                    distanceToSection = (field[currentField].lengthOfTheField*0.5).toFloat()
+                    distanceToSection = (f[currentField].l1*0.5).toFloat()
                     binding.textDistance?.setText(distanceToSection.toString())
                 }
                 drawAll()
@@ -411,8 +671,8 @@ class MainActivity : AppCompatActivity() {
                 try {
                     l = LengthsInput[numberOfFields + 1].text.toString().toFloat()
                     if (l > 0) {
-                        l0 = field[numberOfFields].beginningOfTheField +
-                                field[numberOfFields].lengthOfTheField
+                        l0 = f[numberOfFields].l0 +
+                                f[numberOfFields].l1
                         LengthsInput[numberOfFields + 1].error = null
                     } else {
                         LengthsInput[numberOfFields + 1].error = getString(R.string.wrong)
@@ -444,7 +704,7 @@ class MainActivity : AppCompatActivity() {
                     EI = 0f
                 }
                 if ((l > 0) and (l0 > 0) and (EI > 0)) {
-                    field.add(MyField(l, l0, EI, numberOfFields + 1))
+                    f.add(MyField(l, l0, EI, numberOfFields + 1))
                 }
                 LengthsInput[numberOfFields + 1].isEnabled = true
                 EIInput[numberOfFields + 1].isEnabled = true
@@ -458,7 +718,7 @@ class MainActivity : AppCompatActivity() {
                 arrayOfNumbersFields.removeAt(numberOfFields)
                 if (currentField == numberOfFields + 1) {
                     currentField = numberOfFields
-                    distanceToSection = (field[currentField].lengthOfTheField*0.5).toFloat()
+                    distanceToSection = (f[currentField].l1*0.5).toFloat()
                     binding.textDistance?.setText(distanceToSection.toString())
                 }
                 drawAll()
@@ -492,13 +752,13 @@ class MainActivity : AppCompatActivity() {
     private fun checkTheDistance() {
         try {
             val distance: Float = binding.textDistance?.text.toString().toFloat()
-            if ((distance >= 0) and (distance <= field[currentField].lengthOfTheField)){
+            if ((distance >= 0) and (distance <= f[currentField].l1)){
                 distanceToSection = distance
                 binding.textDistance!!.error = null
                 drawAll()
             }
             else {
-                distanceToSection = (field[currentField].lengthOfTheField*0.5).toFloat()
+                distanceToSection = (f[currentField].l1*0.5).toFloat()
             }
         }
         catch (exception: NumberFormatException) {
@@ -645,7 +905,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun hideSystemUI() {
-        /*
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).let { controller ->
             controller.hide(WindowInsetsCompat.Type.systemBars())
@@ -653,7 +913,7 @@ class MainActivity : AppCompatActivity() {
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
 
-         */
+
     }
 
 
@@ -694,14 +954,6 @@ class MainActivity : AppCompatActivity() {
         textResultSum.text = ("<b>ΣA =</b>").toSpanned()
         textResultSum.textAlignment = View.TEXT_ALIGNMENT_CENTER
         textResultSum.width = widthOfAnElement
-        // onClick the text a message will be displayed "HELLO GEEK"
-        textResultSum.setOnClickListener()
-        {
-            Toast.makeText(
-                this@MainActivity, "HELLO GEEK LENGTH",
-                Toast.LENGTH_LONG
-            ).show()
-        }
         // Add EditText to LinearLayout
         binding.LayoutResultsSum?.addView(textResultSum)
 
@@ -716,14 +968,6 @@ class MainActivity : AppCompatActivity() {
         resultSum.text = ("<b>0</b>").toSpanned()
         resultSum.textAlignment = View.TEXT_ALIGNMENT_CENTER
         resultSum.width = widthOfAnElement
-        // onClick the text a message will be displayed "HELLO GEEK"
-        resultSum.setOnClickListener()
-        {
-            Toast.makeText(
-                this@MainActivity, "HELLO GEEK LENGTH",
-                Toast.LENGTH_LONG
-            ).show()
-        }
         // Add EditText to LinearLayout
         binding.LayoutResultsSum?.addView(resultSum)
     }
@@ -741,14 +985,6 @@ class MainActivity : AppCompatActivity() {
         textResultSumMinus.text = ("<b>ΣA- =</b>").toSpanned()
         textResultSumMinus.textAlignment = View.TEXT_ALIGNMENT_CENTER
         textResultSumMinus.width = widthOfAnElement
-        // onClick the text a message will be displayed "HELLO GEEK"
-        textResultSumMinus.setOnClickListener()
-        {
-            Toast.makeText(
-                this@MainActivity, "HELLO GEEK LENGTH",
-                Toast.LENGTH_LONG
-            ).show()
-        }
         // Add EditText to LinearLayout
         binding.LayoutResultsSum?.addView(textResultSumMinus)
 
@@ -763,14 +999,6 @@ class MainActivity : AppCompatActivity() {
         resultSumMinus.text = ("<b>0</b>").toSpanned()
         resultSumMinus.textAlignment = View.TEXT_ALIGNMENT_CENTER
         resultSumMinus.width = widthOfAnElement
-        // onClick the text a message will be displayed "HELLO GEEK"
-        resultSumMinus.setOnClickListener()
-        {
-            Toast.makeText(
-                this@MainActivity, "HELLO GEEK LENGTH",
-                Toast.LENGTH_LONG
-            ).show()
-        }
         // Add EditText to LinearLayout
         binding.LayoutResultsSum?.addView(resultSumMinus)
     }
@@ -788,14 +1016,6 @@ class MainActivity : AppCompatActivity() {
         textResultSumPlus.text = ("<b>ΣA+ =</b>").toSpanned()
         textResultSumPlus.textAlignment = View.TEXT_ALIGNMENT_CENTER
         textResultSumPlus.width = widthOfAnElement
-        // onClick the text a message will be displayed "HELLO GEEK"
-        textResultSumPlus.setOnClickListener()
-        {
-            Toast.makeText(
-                this@MainActivity, "HELLO GEEK LENGTH",
-                Toast.LENGTH_LONG
-            ).show()
-        }
         // Add EditText to LinearLayout
         binding.LayoutResultsSum?.addView(textResultSumPlus)
 
@@ -810,14 +1030,6 @@ class MainActivity : AppCompatActivity() {
         resultSumPlus.text = ("<b>0</b>").toSpanned()
         resultSumPlus.textAlignment = View.TEXT_ALIGNMENT_CENTER
         resultSumPlus.width = widthOfAnElement
-        // onClick the text a message will be displayed "HELLO GEEK"
-        resultSumPlus.setOnClickListener()
-        {
-            Toast.makeText(
-                this@MainActivity, "HELLO GEEK LENGTH",
-                Toast.LENGTH_LONG
-            ).show()
-        }
         // Add EditText to LinearLayout
         binding.LayoutResultsSum?.addView(resultSumPlus)
     }
@@ -850,14 +1062,6 @@ class MainActivity : AppCompatActivity() {
             ResultOrdinateMinus[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
             ResultOrdinateMinus[i-1].width = widthOfAnElement
             ResultOrdinateMinus[i-1].isEnabled = isItEnabled
-            // onClick the text a message will be displayed "HELLO GEEK"
-            ResultOrdinateMinus[i-1].setOnClickListener()
-            {
-                Toast.makeText(
-                    this@MainActivity, "HELLO GEEK LENGTH",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
             // Add EditText to LinearLayout
             binding.LayoutResultsOrdinateMin?.addView(ResultOrdinateMinus[i-1])
         }
@@ -891,14 +1095,6 @@ class MainActivity : AppCompatActivity() {
             ResultOrdinatePlus[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
             ResultOrdinatePlus[i-1].width = widthOfAnElement
             ResultOrdinatePlus[i-1].isEnabled = isItEnabled
-            // onClick the text a message will be displayed "HELLO GEEK"
-            ResultAreaMinus[i-1].setOnClickListener()
-            {
-                Toast.makeText(
-                    this@MainActivity, "HELLO GEEK LENGTH",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
             // Add EditText to LinearLayout
             binding.LayoutResultsOrdinateMax?.addView(ResultOrdinatePlus[i-1])
         }
@@ -932,14 +1128,6 @@ class MainActivity : AppCompatActivity() {
             ResultAreaMinus[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
             ResultAreaMinus[i-1].width = widthOfAnElement
             ResultAreaMinus[i-1].isEnabled = isItEnabled
-            // onClick the text a message will be displayed "HELLO GEEK"
-            ResultAreaMinus[i-1].setOnClickListener()
-            {
-                Toast.makeText(
-                    this@MainActivity, "HELLO GEEK LENGTH",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
             // Add EditText to LinearLayout
             binding.LayoutResultsAreaMin?.addView(ResultAreaMinus[i-1])
         }
@@ -1165,9 +1353,9 @@ class MainActivity : AppCompatActivity() {
                 try {
                     if (p0.toString().toFloat()>0){
                         when (lengthIEorSprings) {
-                            "length" -> { field[index].lengthOfTheField = p0.toString().toFloat()
+                            "length" -> { f[index].l1 = p0.toString().toFloat()
                                     sendBeginningOfTheField() }
-                            "EI"    ->  {field[index].EIofTheField = p0.toString().toFloat()
+                            "EI"    ->  {f[index].EI = p0.toString().toFloat()
                             }
                             "springs" -> {
 
@@ -1226,14 +1414,14 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun sendBeginningOfTheField() {
-        field[0].beginningOfTheField = 0f
+        f[0].l0 = 0f
         for (index in 1..numberOfFields) {
-            field[index].beginningOfTheField = field[index-1].beginningOfTheField +
-                    field[index-1].lengthOfTheField
+            f[index].l0 = f[index-1].l0 +
+                    f[index-1].l1
         }
         if (lastConsoleIsUsed) {
-            field[numberOfFields + 1].beginningOfTheField = field[numberOfFields].beginningOfTheField +
-                    field[numberOfFields].lengthOfTheField
+            f[numberOfFields + 1].l0 = f[numberOfFields].l0 +
+                    f[numberOfFields].l1
         }
     }
 
@@ -1295,7 +1483,7 @@ class MainActivity : AppCompatActivity() {
         var l0 = 0f
         try {
             l = LengthsInput[numberOfNeuField].text.toString().toFloat()
-            l0 = field[numberOfNeuField-1].beginningOfTheField + field[numberOfNeuField-1].lengthOfTheField
+            l0 = f[numberOfNeuField-1].l0 + f[numberOfNeuField-1].l1
         }
         catch (exception: NumberFormatException) {
             LengthsInput[numberOfNeuField].error = getString(R.string.wrong)
@@ -1310,7 +1498,7 @@ class MainActivity : AppCompatActivity() {
             EIInput[numberOfNeuField].error = getString(R.string.wrong)
             EI = 1f
         }
-        field.add(MyField(l, l0, EI, numberOfNeuField))
+        f.add(MyField(l, l0, EI, numberOfNeuField))
     }
 
 
@@ -1350,7 +1538,7 @@ class MainActivity : AppCompatActivity() {
                     currentGraph = "R$numberOfGraph"
                 }
             }
-            field.removeAt(unEnableNumberOfField)
+            f.removeAt(unEnableNumberOfField)
             drawAll()
         }
     }
