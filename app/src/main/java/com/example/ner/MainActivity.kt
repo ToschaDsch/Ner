@@ -28,7 +28,7 @@ var distanceToSection: Float = 2.5f
 var currentGraph: String = "M"
 var firstNumber: Int = 1
 var lastNumber: Int = 3
-var k_ber: ArrayList<Float> = arrayListOf(1, 1, 1, 1)
+var k_ber: ArrayList<Float> = arrayListOf(1f, 1f, 1f, 1f)
 
 // coordinate for all cases
 var xg: ArrayList<Float> = ArrayList()
@@ -246,6 +246,9 @@ private fun solveIt(xi: Float, currentNumberOfTheField: Int) {
 
     //def solve_it(x1, n1):  # solve the system
     //global nn, d_sec, n_sec, n0, xg, mg, qg, dg, spr
+    val nn: Int = numberOfFields - 1
+    val n1: Int = currentField
+    val x1: Float = distanceToSection
 
     var stiffnessTensor = Array(nn) {FloatArray(nn)} //stiffness tensor
 
@@ -253,9 +256,7 @@ private fun solveIt(xi: Float, currentNumberOfTheField: Int) {
 
     var dx: Float = 0f
 
-    val nn: Int = numberOfFields - 1
-    val n1: Int = currentField
-    val x1: Float = distanceToSection
+
 
     //FIX k_ber
     for (i in 0..nn) {   //# make dii
