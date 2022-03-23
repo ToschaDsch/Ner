@@ -15,6 +15,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.example.ner.databinding.ActivityMainBinding
+import kotlin.math.pow
 
 var numberOfFields: Int = 3
 var precisionOfFragmentation: Int = 6
@@ -27,6 +28,7 @@ var distanceToSection: Float = 2.5f
 var currentGraph: String = "M"
 var firstNumber: Int = 1
 var lastNumber: Int = 3
+var k_ber: ArrayList<Float> = arrayListOf(1, 1, 1, 1)
 
 // coordinate for all cases
 var xg: ArrayList<Float> = ArrayList()
@@ -86,7 +88,7 @@ data class Reaction( // # tables of data for reactions
 class MyField(
     var l1: Float,  // lehgth of the field
     var l0: Float,  // beginning of the field
-    var EI: Float,  //  stiffness of the field
+    var ei1: Float,  //  stiffness of the field
     var numberOfTheField: Int
 ) {
 
@@ -244,34 +246,46 @@ private fun solveIt(xi: Float, currentNumberOfTheField: Int) {
 
     //def solve_it(x1, n1):  # solve the system
     //global nn, d_sec, n_sec, n0, xg, mg, qg, dg, spr
-    val numberX: Int = numberOfFields - 1
-    var stiffnessTensor = ArrayList<Float>(numberX) //stiffness tensor
+
+    var stiffnessTensor = Array(nn) {FloatArray(nn)} //stiffness tensor
 
     var rx: Array<Float> = Array(numberOfFields)       // coefficients for bearings
 
     var dx: Float = 0f
 
+    val nn: Int = numberOfFields - 1
+    val n1: Int = currentField
+    val x1: Float = distanceToSection
+
     //FIX k_ber
-
-    for (i in numberX) {   //# make dii
+    for (i in 0..nn) {   //# make dii
         stiffnessTensor[i][i] = f[i + 1].l1 / (3 * f[i + 1].ei1) + f[i + 2].l1 / (3 * f[i + 2].ei1) +
-            1 / f[i + 1].l1 ** 2 * k_ber[i] + (1 / f[i + 1].l1 + 1 / f[i + 2].l1) ** 2 * k_ber[i + 1] +
-            1 / f[i + 2].l1 ** 2 * k_ber[i + 2]
+            1 / f[i + 1].l1.pow(2.0) * k_ber[i] + (1 / f[i + 1].l1 + 1 / f[i + 2].l1).pow(2.0) * k_ber[i + 1] +
+            1 / f[i + 2].l1.pow(2.0) * k_ber[i + 2]
 
-        if (i == 0 and currentField == 1) {// the first field
-            matr[0][nn - 1] = -(f[1].l1 - x1) * x1 * (f[1].l1 + x1) / (6 * f[1].ei1 * f[1].l1) -
+        if ((i == 0) and (n1 == 1)) {// the first field
+            stiffnessTensor[0][nn - 1] = -(f[1].l1 - x1) * x1 * (f[1].l1 + x1) / (6 * f[1].ei1 * f[1].l1) -
                     (1 - x1 / f[1].l1) / f[1].l1 * k_ber[0] +
                     (1 / f[1].l1 + 1 / f[2].l1) * x1 / f[1].l1 * k_ber[1]
+            if (nn > 2) {
+                stiffnessTensor[1][nn - 1] = -1 / f[2].l1 * x1 / f[1].l1 * k_ber[1]
+            }
+        }
+        else if ((n1 == nn) and (i == nn - 2)) {
+            //# the last field
+            stiffnessTensor[nn - 2][nn - 1] =
+                -(2 * f[nn].l1 - x1) * x1 * (f[nn].l1 - x1) / (6 * f[nn].ei1 * f[nn].l1)
+            -(x1 / f[numberXnumberX].l1) / f[nn].l1 * k_ber[nn]
+            +(1 - x1 / f[nn].l1) * (1 / f[nn].l1 + 1 / f[nn - 1].l1) * k_ber[nn - 1]
+            if (nn > 2) {
+                stiffnessTensor[nn - 3][nn - 1] = -1 / f[nn - 1].l1 * k_ber[nn - 1] * (1 - x1 / f[nn].l1)
+            }
+
         }
     }
-    if nn > 2:
-    matr[1][nn - 1] = - 1 / f[2].l1 * x1 / f[1].l1 * k_ber[1]
-    elif n1 == nn and i == nn - 2:  # the last field
-    matr[nn - 2][nn - 1] = -(2 * f[nn].l1 - x1) * x1 * (f[nn].l1 - x1) / (6 * f[nn].ei1 * f[nn].l1) \
-    - (x1 / f[nn].l1) / f[nn].l1 * k_ber[nn] \
-    + (1 - x1 / f[nn].l1) * (1 / f[nn].l1 + 1 / f[nn - 1].l1) * k_ber[nn - 1]
-    if nn > 2:
-    matr[nn - 3][nn - 1] = - 1 / f[nn - 1].l1 * k_ber[nn - 1] * (1 - x1 / f[nn].l1)
+
+
+
     elif n1 == 0 and i == 0:  # there is a console at the beginning
     matr[0][nn - 1] = (f[0].l1 - x1) * f[1].l1 / (6 * f[1].ei1) \
     - (f[0].l1 - x1 + f[1].l1) / f[1].l1 / f[1].l1 * k_ber[0] \
@@ -630,7 +644,7 @@ class MainActivity : AppCompatActivity() {
                 try {
                     val p0: Float = EIInput[0].text.toString().toFloat()
                     if (p0 > 0) {
-                        f[0].EI = p0
+                        f[0].ei1 = p0
                         EIInput[0].error = null
                     } else {
                         EIInput[0].error = getString(R.string.wrong)
@@ -1355,10 +1369,9 @@ class MainActivity : AppCompatActivity() {
                         when (lengthIEorSprings) {
                             "length" -> { f[index].l1 = p0.toString().toFloat()
                                     sendBeginningOfTheField() }
-                            "EI"    ->  {f[index].EI = p0.toString().toFloat()
+                            "EI"    ->  {f[index].ei1 = p0.toString().toFloat()
                             }
-                            "springs" -> {
-
+                            "springs" -> {k_ber[index] = 1/p0.toString().toFloat()
                             }
                         }
                         LengthsInput[index].error = null
@@ -1463,6 +1476,7 @@ class MainActivity : AppCompatActivity() {
             EIInput[enableNumberOfField].isEnabled = true
             if (checkSprings.isChecked) {
                 SpringInput[numberOfFields].isEnabled = true
+                k_ber.add(SpringInput[numberOfFields].text.toString().toFloat())
             }
             CheckBoxDrawCurve[numberOfFields + 3].isEnabled = true
             ResultAreaPlus[enableNumberOfField].isEnabled = true
@@ -1471,6 +1485,7 @@ class MainActivity : AppCompatActivity() {
             ResultOrdinateMinus[enableNumberOfField].isEnabled = true
 
             arrayOfNumbersFields.add(enableNumberOfField)
+
 
             makeNeuDateOfField(enableNumberOfField)
             drawAll()
@@ -1539,6 +1554,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             f.removeAt(unEnableNumberOfField)
+            k_ber.removeAt(numberOfFields)
             drawAll()
         }
     }
@@ -1625,6 +1641,9 @@ class MainActivity : AppCompatActivity() {
         if (checkSprings.isChecked) {
             for (i in 0..numberOfFields) {
                 SpringInput[i].isEnabled = true
+                try {
+                    k_ber[i] = 1 / SpringInput[i].text.toString().toFloat()
+                }
             }
         }
         else {
