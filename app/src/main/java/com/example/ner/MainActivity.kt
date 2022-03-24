@@ -23,12 +23,13 @@ var shortestField: Float = 5f
 var arrayOfNumbersFields = arrayListOf(1, 2, 3)
 var firstConsoleIsUsed: Boolean = false
 var lastConsoleIsUsed: Boolean = false
-var currentField: Int = 1
+var fieldOfTheSection: Int = 1
 var distanceToSection: Float = 2.5f
 var currentGraph: String = "M"
 var firstNumber: Int = 1
 var lastNumber: Int = 3
 var k_ber: ArrayList<Float> = arrayListOf(1f, 1f, 1f, 1f)
+var xx: ArrayList<Float> = ArrayList()
 
 // coordinate for all cases
 var xg: ArrayList<Float> = ArrayList()
@@ -143,7 +144,7 @@ class MyField(
             paintField
         )
 
-        if (this.numberOfTheField == currentField) {
+        if (this.numberOfTheField == fieldOfTheSection) {
             // draw section
             val xs: Float = x0 + distanceToSection / scaleX
             canvas.drawLine(xs, y0OfMyImage - 20,
@@ -164,7 +165,7 @@ class MyField(
             x.add(x[dfi-1] + df - 0.0001f)
 
         var check1 = 0
-        if (this.numberOfTheField == currentField) {  // the section is in the field
+        if (this.numberOfTheField == fieldOfTheSection) {  // the section is in the field
             for (i in 0 until x.size) {
                 if (x[i] == distanceToSection) {
                     x.add(i + 1, (distanceToSection + 0.0001).toFloat())
@@ -198,6 +199,7 @@ class MyField(
 
         if (this.numberOfTheField == numberOfTheField + 1) { //# the last point
             solveIt(this.l1, this.numberOfTheField)
+
         }
     }
 }
@@ -242,27 +244,17 @@ private fun drawTheGraphic(listOfOrdinate: ArrayList<Float>) {
     }
 }
 
-private fun solveIt(xi: Float, currentNumberOfTheField: Int) {
+private fun solveIt(x1: Float, n1: Int) {
 
     //def solve_it(x1, n1):  # solve the system
     //global nn, d_sec, n_sec, n0, xg, mg, qg, dg, spr
-    val nn: Int = numberOfFields - 1
-    val n1: Int = currentField
-    val x1: Float = distanceToSection
-
+    val nn: Int = numberOfFields
     var stiffnessTensor = Array(nn) {FloatArray(nn)} //stiffness tensor
 
-    var rx: Array<Float> = Array(numberOfFields)       // coefficients for bearings
-
-    var dx: Float = 0f
-
-
-
-    //FIX k_ber
     for (i in 0..nn) {   //# make dii
         stiffnessTensor[i][i] = f[i + 1].l1 / (3 * f[i + 1].ei1) + f[i + 2].l1 / (3 * f[i + 2].ei1) +
-            1 / f[i + 1].l1.pow(2.0) * k_ber[i] + (1 / f[i + 1].l1 + 1 / f[i + 2].l1).pow(2.0) * k_ber[i + 1] +
-            1 / f[i + 2].l1.pow(2.0) * k_ber[i + 2]
+            1 / f[i + 1].l1.pow(2) * k_ber[i] + (1 / f[i + 1].l1 + 1 / f[i + 2].l1).pow(2) * k_ber[i + 1] +
+            1 / f[i + 2].l1.pow(2) * k_ber[i + 2]
 
         if ((i == 0) and (n1 == 1)) {// the first field
             stiffnessTensor[0][nn - 1] = -(f[1].l1 - x1) * x1 * (f[1].l1 + x1) / (6 * f[1].ei1 * f[1].l1) -
@@ -276,169 +268,245 @@ private fun solveIt(xi: Float, currentNumberOfTheField: Int) {
             //# the last field
             stiffnessTensor[nn - 2][nn - 1] =
                 -(2 * f[nn].l1 - x1) * x1 * (f[nn].l1 - x1) / (6 * f[nn].ei1 * f[nn].l1)
-            -(x1 / f[numberXnumberX].l1) / f[nn].l1 * k_ber[nn]
+            -(x1 / f[nn].l1) / f[nn].l1 * k_ber[nn]
             +(1 - x1 / f[nn].l1) * (1 / f[nn].l1 + 1 / f[nn - 1].l1) * k_ber[nn - 1]
             if (nn > 2) {
                 stiffnessTensor[nn - 3][nn - 1] = -1 / f[nn - 1].l1 * k_ber[nn - 1] * (1 - x1 / f[nn].l1)
             }
+        }
+        else if ((n1 == 0) and (i == 0)) {
+            //# there is a console at the beginning
+            stiffnessTensor[0][nn - 1] = (f[0].l1 - x1) * f[1].l1 / (6 * f[1].ei1)
+            -(f[0].l1 - x1 + f[1].l1) / f[1].l1 / f[1].l1 * k_ber[0]
+            -(1 / f[1].l1 + 1 / f[2].l1) * (f[0].l1 - x1) / f[1].l1 * k_ber[1]
+            if (nn > 2) {
+                stiffnessTensor[1][nn - 1] = (f[0].l1 - x1) / f[1].l1 * k_ber[1] / f[2].l1
+            }
+        }
+        else if (n1 == nn + 1) { //  # there is a console at the end
+            stiffnessTensor[nn - 2][nn - 1] = x1 * f[nn].l1 / (6 * f[nn].ei1)
+            -(x1 + f[nn].l1) / f[nn].l1 / f[nn].l1 * k_ber[nn]
+            -(x1 / f[nn].l1) * (1 / f[nn].l1 + 1 / f[nn - 1].l1) * k_ber[nn - 1]
+            if (nn > 2) {
+                stiffnessTensor[nn - 3][nn - 1] = x1 / f[nn].l1 / f[nn - 1].l1 * k_ber[nn - 1]
+            }
+        }
+        else { //  # GENERAL CASE
+            if (i == n1 - 2) {//  # xi is left
+                stiffnessTensor[i][nn - 1] =
+                    -(2 * f[n1].l1 - x1) * x1 * (f[n1].l1 - x1) / (6 * f[n1].ei1 * f[n1].l1)
+                +(1 - x1 / f[n1].l1) * (1 / f[n1].l1 + 1 / f[n1 - 1].l1) * k_ber[n1 - 1]
+                -x1 / f[n1].l1 / f[n1].l1 * k_ber[n1]
+                if ((nn - 1 > n1) and (n1 > 1)) {
+                    stiffnessTensor[i + 2][nn - 1] = -x1 / f[n1].l1 * k_ber[n1] / f[n1 + 1].l1
+                }
+            }
+            else if (i == n1 - 1) { //  # xi is right
+                stiffnessTensor[i][nn - 1] =
+                    -(f[n1].l1 + x1) * x1 * (f[n1].l1 - x1) / (6 * f[n1].ei1 * f[n1].l1)
+                -(1 - x1 / f[n1].l1) / f[n1].l1 * k_ber[n1 - 1]
+                +x1 / f[n1].l1 * (1 / f[n1].l1 + 1 / f[n1 + 1].l1) * k_ber[n1]
 
+                if ((2 < n1) and (n1 < nn)) {
+                     stiffnessTensor[i - 2][nn - 1] = -(1 - x1 / f[n1].l1) * k_ber[n1 - 1] / f[n1 - 1].l1
+                }
+            }
         }
     }
+    if (nn != 1) {
+        //# you need xi, 2 and more fields
+        for (i in 0 until nn - 2) { //# make d21, d21 et cetera
+            stiffnessTensor[i][i + 1] = f[i + 2].l1 / (6 * f[i + 2].ei1)
+            -(1 / f[i + 1].l1 + 1 / f[i + 2].l1) / f[i + 2].l1 * k_ber[i + 1]
+            -(1 / f[i + 2].l1 + 1 / f[i + 3].l1) / f[i + 3].l1 * k_ber[i + 2]
+            stiffnessTensor[i + 1][i] = stiffnessTensor[i][i + 1]
+        }
+        for (i in 0 until nn - 3) {  //# d13, 31 et cetera
+            stiffnessTensor[i][i + 2] = 1 / f[i + 2].l1 / f[i + 3].l1 * k_ber[i + 2]
+            stiffnessTensor[i + 2][i] = stiffnessTensor[i][i + 2]
+        }
+        stiffnessTensor = gaussPivotFunc(stiffnessTensor)
+
+        for (i in 0 until nn - 1) {
+            xx.add(stiffnessTensor[i][nn - 1])
+        }
+        makeResultManyFields(x1, n1)
+    }
+    else {
+        makeResultOneField(x1, n1)
+    }
+}
 
 
+private fun gaussPivotFunc(matrix: Array<Array<Float>>): Array<Array<Float>> {
+    var result: Array<Array<Float>>
 
-    elif n1 == 0 and i == 0:  # there is a console at the beginning
-    matr[0][nn - 1] = (f[0].l1 - x1) * f[1].l1 / (6 * f[1].ei1) \
-    - (f[0].l1 - x1 + f[1].l1) / f[1].l1 / f[1].l1 * k_ber[0] \
-    - (1 / f[1].l1 + 1 / f[2].l1) * (f[0].l1 - x1) / f[1].l1 * k_ber[1]
-    if nn > 2:
-    matr[1][nn - 1] = (f[0].l1 - x1) / f[1].l1 * k_ber[1] / f[2].l1
-    elif n1 == nn + 1:  # there is a console at the end
-    matr[nn - 2][nn - 1] = x1 * f[nn].l1 / (6 * f[nn].ei1) \
-    - (x1 + f[nn].l1) / f[nn].l1 / f[nn].l1 * k_ber[nn] \
-    - (x1 / f[nn].l1) * (1 / f[nn].l1 + 1 / f[nn - 1].l1) * k_ber[nn - 1]
-    if nn > 2:
-    matr[nn - 3][nn - 1] = x1 / f[nn].l1 / f[nn - 1].l1 * k_ber[nn - 1]
-    else:  # GENERAL CASE
-    if i == n1 - 2:  # xi is left
-    matr[i][nn - 1] = -(2 * f[n1].l1 - x1) * x1 * (f[n1].l1 - x1) / (6 * f[n1].ei1 * f[n1].l1) \
-    + (1 - x1 / f[n1].l1) * (1 / f[n1].l1 + 1 / f[n1 - 1].l1) * k_ber[n1 - 1] \
-    - x1 / f[n1].l1 / f[n1].l1 * k_ber[n1]
-    if nn - 1 > n1 > 1:
-    matr[i + 2][nn - 1] = - x1 / f[n1].l1 * k_ber[n1] / f[n1 + 1].l1
-    elif i == n1 - 1:  # xi is right
-    matr[i][nn - 1] = -(f[n1].l1 + x1) * x1 * (f[n1].l1 - x1) / (6 * f[n1].ei1 * f[n1].l1) \
-    - (1 - x1 / f[n1].l1) / f[n1].l1 * k_ber[n1 - 1] \
-    + x1 / f[n1].l1 * (1 / f[n1].l1 + 1 / f[n1 + 1].l1) * k_ber[n1]
-    if 2 < n1 < nn:
-    matr[i - 2][nn - 1] = - (1 - x1 / f[n1].l1) * k_ber[n1 - 1] / f[n1 - 1].l1
+    return result?
+}
 
-    if nn != 1:  # you need xi, 2 and more fields
-    for i in range(nn - 2):  # make d21, d21 et cetera
-    matr[i][i + 1] = matr[i + 1][i] = f[i + 2].l1 / (6 * f[i + 2].ei1) \
-    - (1 / f[i + 1].l1 + 1 / f[i + 2].l1) / f[i + 2].l1 * k_ber[i + 1] \
-    - (1 / f[i + 2].l1 + 1 / f[i + 3].l1) / f[i + 3].l1 * k_ber[i + 2]
-    for i in range(nn - 3):  # d13, 31 et cetera
-    matr[i][i + 2] = matr[i + 2][i] = 1 / f[i + 2].l1 / f[i + 3].l1 * k_ber[i + 2]
 
-    matr = gaussPivotFunc(np.array(matr))
-    xx = [0 for i in range(nn - 1)]
-    for i in range(nn - 1):
-    xx[i] = matr[i][nn - 1]
+private fun makeResultManyFields(x1: Float, n1: Int) {
+    var rx: FloatArray = FloatArray(numberOfFields)       // coefficients for bearings
+    val nn: Int = numberOfFields
+    val nSec: Int = fieldOfTheSection
+    val n0: Int = if (firstConsoleIsUsed) 0 else 1
+    val n2: Int = if (lastConsoleIsUsed) 1 else 0
+    val dSec: Float = distanceToSection
+    val mx: Float
+    val qx: Float
+    val dx: Float
 
-    if n_sec == 1:  # the first field
-    if n0 == 0 and n1 == 0:  # there is a console at the beginning
-    mx = - d_sec / f[1].l1 * xx[0] + (f[0].l1 - x1) * (f[1].l1 - d_sec) / f[1].l1
-    qx = -(xx[0] / f[1].l1 + (f[0].l1 - x1) / f[1].l1)
-    dx = -(f[1].l1 - d_sec) * d_sec * (f[1].l1 + d_sec) / (6 * f[1].ei1 * f[1].l1) * xx[0] \
-    + (2 * f[1].l1 - d_sec) * d_sec * (f[1].l1 - d_sec) / (6 * f[1].ei1 * f[1].l1) * (f[0].l1 - x1)
-    else:  # there is no console
-    mx = - d_sec / f[1].l1 * xx[0]  # + M
-    qx = -(xx[0] / f[1].l1)
-    dx = -(f[1].l1 - d_sec) * d_sec * (f[1].l1 + d_sec) / (6 * f[1].ei1 * f[1].l1) * xx[0]
-    elif n_sec == nn:  # the last field
-    if n2 == 1 and n1 == nn + 1:  # there is a console at the end
-    mx = -((f[nn].l1 - d_sec) / f[nn].l1 * xx[nn - 2] - x1 * d_sec / f[nn].l1)
-    qx = (xx[nn - 2] / f[nn].l1 + x1 / f[nn].l1)
-    dx = -(2 * f[nn].l1 - d_sec) * d_sec * (f[nn].l1 - d_sec) / (6 * f[nn].ei1 * f[nn].l1) * xx[nn - 2] \
-    + (f[nn].l1 - d_sec) * d_sec * (f[nn].l1 + d_sec) / (6 * f[nn].ei1 * f[nn].l1) * x1
-    else:  # there is no console at the end
-    mx = -((f[nn].l1 - d_sec) / f[nn].l1 * xx[nn - 2])  # + M
-    qx = (xx[nn - 2] / f[nn].l1)
-    dx = -(2 * f[nn].l1 - d_sec) * d_sec * (f[nn].l1 - d_sec) / (6 * f[nn].ei1 * f[nn].l1) * xx[nn - 2]
-    elif n_sec == 0:  # there is a console at the beginning, GENERAL CASE
-    mx = 0
-    qx = 0
-    dx = (f[0].l1 - d_sec) * f[1].l1 * xx[0] / (6 * f[1].ei1)
-    elif n_sec == nn + 1:  # there is a console at the end, GENERAL CASE
-    mx = 0
-    qx = 0
-    dx = d_sec * f[nn].l1 * xx[nn - 2] / (6 * f[nn].ei1)
-    else:  # an intermediate field, GENERAL CASE
-    mx = -(d_sec / f[n_sec].l1 * xx[n_sec - 1] + (f[n_sec].l1 - d_sec) / f[n_sec].l1 * xx[n_sec - 2])  # + M
-    qx = (-1 / f[n_sec].l1 * xx[n_sec - 1] + 1 / f[n_sec].l1 * xx[n_sec - 2])
-    dx = -(f[n_sec].l1 - d_sec) * d_sec * (f[n_sec].l1 + d_sec) / (6 * f[n_sec].ei1 * f[n_sec].l1) * xx[
-            n_sec - 1] - \
-    + (2 * f[n_sec].l1 - d_sec) * d_sec * (f[n_sec].l1 - d_sec) / (6 * f[n_sec].ei1 * f[n_sec].l1) * xx[
-            n_sec - 2]
-    else:  # (nn == 1)  # one field
-    if n1 == 0 and n_sec == 1:  # the last is on the console at the beginning
-    mx = (f[0].l1 - x1) * (f[1].l1 - d_sec) / f[1].l1
-    qx = -(f[0].l1 - x1) / f[1].l1
-    dx = (2 * f[1].l1 - d_sec) * d_sec * (f[1].l1 - d_sec) / (6 * f[1].ei1 * f[1].l1) * (f[0].l1 - x1)
-    rx[0] = - (f[0].l1 - x1 + f[1].l1) / f[1].l1
-    rx[1] = (f[0].l1 - x1) / f[1].l1
-    elif n1 == 2 and n_sec == 1:  # the last is on the console on the end
-    mx = x1 * d_sec / f[1].l1
-    qx = x1 / f[1].l1
-    dx = (f[nn].l1 - d_sec) * d_sec * (f[nn].l1 + d_sec) / (6 * f[nn].ei1 * f[nn].l1) * x1
-    rx[1] = - (x1 + f[1].l1) / f[1].l1
-    rx[0] = x1 / f[1].l1
-    else:  # there is an intermediate field, the last is on the console
-    if n_sec == 0:  # the section is on the first field
-    if n1 == 1:  # last is on an intermediate  field
-    dx = (2 * f[1].l1 - x1) * x1 * (f[1].l1 - x1) * (f[0].l1 - d_sec) / (6 * f[1].l1 * f[1].ei1)
-    else:  # last is on the last field
-    dx = - x1 * (f[0].l1 - d_sec) * f[1].l1 / (6 * f[1].ei1)
-    elif n_sec == nn + 1:  # the section is on the last field
-    if n1 == 1:  # last is on an intermediate field
-    dx = (f[1].l1 + x1) * x1 * (f[1].l1 - x1) * d_sec / (6 * f[1].l1 * f[1].ei1)
-    else:  # last is on the first field
-    dx = - d_sec * (f[0].l1 - x1) * f[1].l1 / (6 * f[1].ei1)
-    mx = 0
-    qx = 0
-    rx[1] = - (x1 / f[1].l1)
-    rx[0] = - (1 - x1 / f[1].l1)
+    when (nSec) {
+        1 -> {  //# the first field
+            if ((n0 == 0) and (n1 == 0)) { //# there is a console at the beginning
+                mx = -dSec / f[1].l1 * xx[0] + (f[0].l1 - x1) * (f[1].l1 - dSec) / f[1].l1
+                qx = -(xx[0] / f[1].l1 + (f[0].l1 - x1) / f[1].l1)
+                dx = -(f[1].l1 - dSec) * dSec * (f[1].l1 + dSec) / (6 * f[1].ei1 * f[1].l1) * xx[0]
+                +(2 * f[1].l1 - dSec) * dSec * (f[1].l1 - dSec) / (6 * f[1].ei1 * f[1].l1) * (f[0].l1 - x1)
+            } else {
+                //# there is no console
+                mx = -dSec / f[1].l1 * xx[0]  //#+M
+                qx = -(xx[0] / f[1].l1)
+                dx = -(f[1].l1 - dSec) * dSec * (f[1].l1 + dSec) / (6 * f[1].ei1 * f[1].l1) * xx[0]
+            }
+        }
+        nn -> {  //# the last field
+            if ((n2 == 1) and (n1 == nn + 1)) { //# there is a console at the end
+                mx = -((f[nn].l1 - dSec) / f[nn].l1 * xx[nn - 2] - x1 * dSec / f[nn].l1)
+                qx = (xx[nn - 2] / f[nn].l1 + x1 / f[nn].l1)
+                dx =
+                    -(2 * f[nn].l1 - dSec) * dSec * (f[nn].l1 - dSec) / (6 * f[nn].ei1 * f[nn].l1) * xx[nn - 2]
+                +(f[nn].l1 - dSec) * dSec * (f[nn].l1 + dSec) / (6 * f[nn].ei1 * f[nn].l1) * x1
+            } else {
+                //# there is no console at the end
+                mx = -((f[nn].l1 - dSec) / f[nn].l1 * xx[nn - 2]) // #+M
+                qx = (xx[nn - 2] / f[nn].l1)
+                dx =
+                    -(2 * f[nn].l1 - dSec) * dSec * (f[nn].l1 - dSec) / (6 * f[nn].ei1 * f[nn].l1) * xx[nn - 2]
+            }
+        }
+        0 -> { //  # there is a console at the beginning, GENERAL CASE
+            mx = 0f
+            qx = 0f
+            dx = (f[0].l1 - dSec) * f[1].l1 * xx[0] / (6 * f[1].ei1)
+        }
+        nn + 1 -> { //  # there is a console at the end, GENERAL CASE
+            mx = 0f
+            qx = 0f
+            dx = dSec * f[nn].l1 * xx[nn - 2] / (6 * f[nn].ei1)
+        }
+        else -> { // # an intermediate field, GENERAL CASE
+            mx = -(dSec / f[nSec].l1 * xx[nSec - 1] + (f[nSec].l1 - dSec) / f[nSec].l1 * xx[nSec - 2]) // #+M
+            qx = (-1 / f[nSec].l1 * xx[nSec - 1] + 1 / f[nSec].l1 * xx[nSec - 2])
+            dx = -(f[nSec].l1 - dSec) * dSec * (f[nSec].l1 + dSec) / (6 * f[nSec].ei1 * f[nSec].l1) * xx[
+                    nSec - 1] - (2 * f[nSec].l1 - dSec) * dSec * (f[nSec].l1 - dSec) / (6 * f[nSec].ei1 * f[nSec].l1) * xx[nSec - 2]
+        }
+    }
+}
 
-    if n_sec == n1:  # + M0
+
+private fun makeResultOneField(x1: Float, n1: Int) {
+    val nn: Int = numberOfFields
+    val nSec: Int = fieldOfTheSection
+    val n0: Int = if (firstConsoleIsUsed) 0 else 1
+    val n2: Int = if (lastConsoleIsUsed) 1 else 0
+    val dSec: Float = distanceToSection
+    val mx: Float
+    val qx: Float
+    val dx: Float
+    var rx: Array<Float> = arrayOf(0f, 0f)       // coefficients for bearings
+
+    if ((n1 == 0) and (nSec == 1)) {
+        //# the last is on the console at the beginning
+        mx = (f[0].l1 - x1) * (f[1].l1 - dSec) / f[1].l1
+        qx = -(f[0].l1 - x1) / f[1].l1
+        dx = (2 * f[1].l1 - dSec) * dSec * (f[1].l1 - dSec) / (6 * f[1].ei1 * f[1].l1) * (f[0].l1 - x1)
+        rx[0] = -(f[0].l1 - x1 + f[1].l1) / f[1].l1
+        rx[1] = (f[0].l1 - x1) / f[1].l1
+    }
+    else if ((n1 == 2) and (nSec == 1)) { //  # the last is on the console on the end
+        mx = x1 * dSec / f[1].l1
+        qx = x1 / f[1].l1
+        dx = (f[nn].l1 - dSec) * dSec * (f[nn].l1 + dSec) / (6 * f[nn].ei1 * f[nn].l1) * x1
+        rx[1] = -(x1 + f[1].l1) / f[1].l1
+        rx[0] = x1 / f[1].l1
+    }
+    else { //  # there is an intermediate field, the last is on the console
+        if (nSec == 0) { //  # the section is on the first field
+            if (n1 == 1) { //  # last is on an intermediate  field
+                dx =
+                    (2 * f[1].l1 - x1) * x1 * (f[1].l1 - x1) * (f[0].l1 - dSec) / (6 * f[1].l1 * f[1].ei1)
+            } else { //# last is on the last field
+                dx = -x1 * (f[0].l1 - dSec) * f[1].l1 / (6 * f[1].ei1)
+            }
+        }
+        else if (nSec == nn +1) { //  # the section is on the last field
+            if (n1 == 1) { // # last is on an intermediate field
+                dx = (f[1].l1 + x1) * x1 * (f[1].l1 - x1) * dSec / (6 * f[1].l1 * f[1].ei1)
+            }
+            else { // # last is on the first field
+                dx = -dSec * (f[0].l1 - x1) * f[1].l1 / (6 * f[1].ei1)
+                mx = 0f
+                qx = 0f
+                rx[1] = -(x1 / f[1].l1)
+                rx[0] = -(1 - x1 / f[1].l1)
+            }
+        }
+    }
+}
+
+    if nSec == n1:  # + M0
     if n1 == 0:  # there is a console at the beginning
-    if d_sec >= x1:
-    mx = -x1 + d_sec
+    if dSec >= x1:
+    mx = -x1 + dSec
     qx = -1
-    dx = - ((f[0].l1 - x1) * (f[0].l1 - d_sec) * f[1].l1 / (3 * f[1].ei1) \
-    + ((f[0].l1 - x1) * 0.5 - (f[0].l1 - d_sec) / 6) * (f[0].l1 - d_sec) ** 2 / f[0].ei1)
+    dx = - ((f[0].l1 - x1) * (f[0].l1 - dSec) * f[1].l1 / (3 * f[1].ei1) \
+    + ((f[0].l1 - x1) * 0.5 - (f[0].l1 - dSec) / 6) * (f[0].l1 - dSec) ** 2 / f[0].ei1)
     else:
     mx = 0
     qx = 0
-    dx = - ((f[0].l1 - x1) * (f[0].l1 - d_sec) * f[1].l1 / (3 * f[1].ei1) \
-    + ((f[0].l1 - x1) * (f[0].l1 - d_sec) * 0.5 - (f[0].l1 - x1) ** 2 / 6) * (f[0].l1 - x1) / f[
+    dx = - ((f[0].l1 - x1) * (f[0].l1 - dSec) * f[1].l1 / (3 * f[1].ei1) \
+    + ((f[0].l1 - x1) * (f[0].l1 - dSec) * 0.5 - (f[0].l1 - x1) ** 2 / 6) * (f[0].l1 - x1) / f[
     0].ei1)
     elif n1 == nn + 1:  # there is a console at the end
-    if x1 > d_sec:
-    mx = x1 - d_sec
+    if x1 > dSec:
+    mx = x1 - dSec
     qx = 1
-    dx = - x1 * d_sec * f[nn].l1 / (3 * f[nn].ei1) \
-    - (x1 * 0.5 - d_sec / 6) * d_sec ** 2 / f[nn + 1].ei1
+    dx = - x1 * dSec * f[nn].l1 / (3 * f[nn].ei1) \
+    - (x1 * 0.5 - dSec / 6) * dSec ** 2 / f[nn + 1].ei1
     else:  # x1 < d_sec
     mx = 0
     qx = 0
-    dx = - x1 * d_sec * f[nn].l1 / (3 * f[nn].ei1) \
-    - (x1 * d_sec * 0.5 - x1 ** 2 / 6) * x1 / f[nn + 1].ei1
+    dx = - x1 * dSec * f[nn].l1 / (3 * f[nn].ei1) \
+    - (x1 * dSec * 0.5 - x1 ** 2 / 6) * x1 / f[nn + 1].ei1
     else:  # there is an intermediate field, GENERAL CASE
-    if x1 <= d_sec:
-    mx = mx - (x1 * (f[n_sec].l1 - x1) / f[n_sec].l1) * (f[n_sec].l1 - d_sec) / (f[n_sec].l1 - x1)
-    qx = qx + x1 / f[n_sec].l1
-    b1 = f[n_sec].l1 - x1
-    dx = dx - b1 * d_sec / (6 * f[n_sec].ei1 * f[n_sec].l1) * (f[n_sec].l1 ** 2 - b1 ** 2 - d_sec ** 2) - (
-    d_sec - x1) ** 3 / (6 * f[n_sec].ei1)
+    if x1 <= dSec:
+    mx = mx - (x1 * (f[nSec].l1 - x1) / f[nSec].l1) * (f[nSec].l1 - dSec) / (f[nSec].l1 - x1)
+    qx = qx + x1 / f[nSec].l1
+    b1 = f[nSec].l1 - x1
+    dx = dx - b1 * dSec / (6 * f[nSec].ei1 * f[nSec].l1) * (f[nSec].l1 ** 2 - b1 ** 2 - d_sec ** 2) - (
+    dSec - x1) ** 3 / (6 * f[n_sec].ei1)
     else:  # x1 > d_sec
     if x1 == 0 and n1 != 0:
     mx = 0
     qx = 0
     dx = 0
     else:
-    mx = mx - (x1 * (f[n_sec].l1 - x1) / f[n_sec].l1) * d_sec / x1
-    qx = qx - (f[n_sec].l1 - x1) / f[n_sec].l1
-    b1 = f[n_sec].l1 - x1
-    dx = dx - b1 * d_sec / (6 * f[n_sec].ei1 * f[n_sec].l1) * (f[n_sec].l1 ** 2 - b1 ** 2 - d_sec ** 2)
+    mx = mx - (x1 * (f[nSec].l1 - x1) / f[nSec].l1) * dSec / x1
+    qx = qx - (f[nSec].l1 - x1) / f[nSec].l1
+    b1 = f[nSec].l1 - x1
+    dx = dx - b1 * dSec / (6 * f[nSec].ei1 * f[nSec].l1) * (f[nSec].l1 ** 2 - b1 ** 2 - d_sec ** 2)
 
     # + M0 2
-    if n_sec == 0 and n1 == 1 and nn != 1:
-    dx = dx + (2 * f[1].l1 - x1) * x1 * (f[1].l1 - x1) * (f[0].l1 - d_sec) / (
+    if nSec == 0 and n1 == 1 and nn != 1:
+    dx = dx + (2 * f[1].l1 - x1) * x1 * (f[1].l1 - x1) * (f[0].l1 - dSec) / (
             6 * f[1].l1 * f[1].ei1)  # the first field
-    if n_sec == nn + 1 and n1 == nn and nn != 1:
-    dx = dx + (f[nn].l1 + x1) * x1 * (f[nn].l1 - x1) * d_sec / (6 * f[nn].l1 * f[nn].ei1)  # the last field
+    if nSec == nn + 1 and n1 == nn and nn != 1:
+    dx = dx + (f[nn].l1 + x1) * x1 * (f[nn].l1 - x1) * dSec / (6 * f[nn].l1 * f[nn].ei1)  # the last field
+}
 
+
+private fun makeReaction() {
     # reactions
     if nn > 1:
     if n1 == 1:  # first field
@@ -513,10 +581,11 @@ private fun gaussPivotFunc(matrix: ArrayList<Float>){
 }
 
 
-private fun makeIdentity(matrix: ArrayList<Float>){s
-    # перебор строк в обратном порядке
-    for nrow in range(len(matrix) - 1, 0, -1):
-    row = matrix[nrow]
+private fun makeIdentity(matrix: ArrayList<Float>){
+    //# перебор строк в обратном порядке
+    for (nrow in matrix.size - 1..0, step -1) {
+        row = matrix[nrow]
+    }
     for upper_row in matrix[:nrow]:
     factor = upper_row[nrow]
     upper_row -= factor * row
@@ -530,7 +599,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var resultSum: TextView
     lateinit var checkSprings: CheckBox
 
-    lateinit var binding : ActivityMainBinding
+    lateinit var binding: ActivityMainBinding
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -563,7 +632,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun initFirstModel() {
         for (i in 0..3) {
-            f.add(MyField(5f, i*5f, 1f, i))
+            f.add(MyField(5f, i * 5f, 1f, i))
         }
     }
 
@@ -595,8 +664,8 @@ class MainActivity : AppCompatActivity() {
             sumLengthOfFields += f[i].l1
         }
         if (firstConsoleIsUsed) sumLengthOfFields += f[0].l1
-        if (lastConsoleIsUsed) sumLengthOfFields += f[numberOfFields+1].l1
-        scaleX =  sumLengthOfFields / widthOfMyImage
+        if (lastConsoleIsUsed) sumLengthOfFields += f[numberOfFields + 1].l1
+        scaleX = sumLengthOfFields / widthOfMyImage
 
         if (firstConsoleIsUsed) {
             f[0].drawOneField()
@@ -607,8 +676,8 @@ class MainActivity : AppCompatActivity() {
             f[i].fragmentationOfOneField()
         }
         if (lastConsoleIsUsed) {
-            f[numberOfFields+1].drawOneField()
-            f[numberOfFields+1].fragmentationOfOneField()
+            f[numberOfFields + 1].drawOneField()
+            f[numberOfFields + 1].fragmentationOfOneField()
         }
     }
 
@@ -658,16 +727,15 @@ class MainActivity : AppCompatActivity() {
                 EIInput[0].isEnabled = true
                 arrayOfNumbersFields.add(0, 0)
                 drawAll()
-            }
-            else {
+            } else {
                 NumbersOfTextView[0].isEnabled = false
                 firstConsoleIsUsed = false
                 LengthsInput[0].isEnabled = false
                 EIInput[0].isEnabled = false
                 arrayOfNumbersFields.removeAt(0)
-                if (currentField == 0) {
-                    currentField = 1
-                    distanceToSection = (f[currentField].l1*0.5).toFloat()
+                if (fieldOfTheSection == 0) {
+                    fieldOfTheSection = 1
+                    distanceToSection = (f[fieldOfTheSection].l1 * 0.5).toFloat()
                     binding.textDistance?.setText(distanceToSection.toString())
                 }
                 drawAll()
@@ -725,15 +793,14 @@ class MainActivity : AppCompatActivity() {
                 EIInput[numberOfFields + 1].isEnabled = true
                 arrayOfNumbersFields.add(numberOfFields + 1)
                 drawAll()
-            }
-            else {
+            } else {
                 lastConsoleIsUsed = false
                 LengthsInput[numberOfFields + 1].isEnabled = false
                 EIInput[numberOfFields + 1].isEnabled = false
                 arrayOfNumbersFields.removeAt(numberOfFields)
-                if (currentField == numberOfFields + 1) {
-                    currentField = numberOfFields
-                    distanceToSection = (f[currentField].l1*0.5).toFloat()
+                if (fieldOfTheSection == numberOfFields + 1) {
+                    fieldOfTheSection = numberOfFields
+                    distanceToSection = (f[fieldOfTheSection].l1 * 0.5).toFloat()
                     binding.textDistance?.setText(distanceToSection.toString())
                 }
                 drawAll()
@@ -749,14 +816,17 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun sendFunctionToDistance() {
-        binding.textDistance?.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        binding.textDistance?.inputType =
+            InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         binding.textDistance?.imeOptions = 1
-        binding.textDistance?.addTextChangedListener(object: TextWatcher {
+        binding.textDistance?.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
             }
+
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
 
             }
+
             override fun afterTextChanged(p0: Editable?) {
                 checkTheDistance()
             }
@@ -767,16 +837,14 @@ class MainActivity : AppCompatActivity() {
     private fun checkTheDistance() {
         try {
             val distance: Float = binding.textDistance?.text.toString().toFloat()
-            if ((distance >= 0) and (distance <= f[currentField].l1)){
+            if ((distance >= 0) and (distance <= f[fieldOfTheSection].l1)) {
                 distanceToSection = distance
                 binding.textDistance!!.error = null
                 drawAll()
+            } else {
+                distanceToSection = (f[fieldOfTheSection].l1 * 0.5).toFloat()
             }
-            else {
-                distanceToSection = (f[currentField].l1*0.5).toFloat()
-            }
-        }
-        catch (exception: NumberFormatException) {
+        } catch (exception: NumberFormatException) {
             binding.textDistance!!.error = getString(R.string.wrong)
         }
     }
@@ -784,34 +852,34 @@ class MainActivity : AppCompatActivity() {
     private fun sendFunctionToPrecision() {
         binding.textPrecision?.inputType = InputType.TYPE_CLASS_NUMBER
         binding.textPrecision?.imeOptions = 1
-        binding.textPrecision?.addTextChangedListener(object: TextWatcher {
+        binding.textPrecision?.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
             }
+
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
 
             }
+
             override fun afterTextChanged(p0: Editable?) {
                 try {
-                    if (p0.toString().toFloat()>2){
+                    if (p0.toString().toFloat() > 2) {
                         precisionOfFragmentation = p0.toString().toInt()
                         binding.textPrecision!!.error = null
                         drawAll()
-                    }
-                    else {
+                    } else {
                         binding.textPrecision!!.error = getString(R.string.wrong)
                     }
-                }
-                catch (exception: NumberFormatException) {
+                } catch (exception: NumberFormatException) {
                     binding.textPrecision!!.error = getString(R.string.wrong)
                 }
             }
         })
     }
 
-    private fun initCanvas(){
+    private fun initCanvas() {
         myBitmap = Bitmap.createBitmap(
-                widthOfImageView,
-                heightOfImageView,
+            widthOfImageView,
+            heightOfImageView,
             Bitmap.Config.ARGB_8888
         )
         canvas = Canvas(myBitmap)
@@ -868,30 +936,33 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun canvasClean(){
+    private fun canvasClean() {
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
     }
 
 
     private fun makeSpinner() {
-        val arrayAdapter = ArrayAdapter(this,
-            android.R.layout.simple_spinner_item, arrayOfNumbersFields)
+        val arrayAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item, arrayOfNumbersFields
+        )
         binding.spinnerNumbersOfFields?.adapter = arrayAdapter
-        binding.spinnerNumbersOfFields?.onItemSelectedListener = object:
-                                            AdapterView.OnItemSelectedListener {
+        binding.spinnerNumbersOfFields?.onItemSelectedListener = object :
+            AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>?,
                 view: View,
                 position: Int,      // it is index in the array
-                id: Long) {
+                id: Long
+            ) {
 
-                currentField = arrayOfNumbersFields[position]
+                fieldOfTheSection = arrayOfNumbersFields[position]
                 drawAll()
             }
 
             override fun onNothingSelected(p0: AdapterView<*>?) {
                 Toast.makeText(
-                    this@MainActivity, currentField.toString(),
+                    this@MainActivity, fieldOfTheSection.toString(),
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -903,13 +974,13 @@ class MainActivity : AppCompatActivity() {
         widthOfApp = Resources.getSystem().displayMetrics.widthPixels
         heightOfApp = Resources.getSystem().displayMetrics.heightPixels
         val dpScale: Float = Resources.getSystem().displayMetrics.density
-        widthOfAnElement = ((widthOfApp-20*dpScale)/12).toInt()
-        widthOfCheckBox = ((widthOfApp-20*dpScale)/11).toInt()
+        widthOfAnElement = ((widthOfApp - 20 * dpScale) / 12).toInt()
+        widthOfCheckBox = ((widthOfApp - 20 * dpScale) / 11).toInt()
 
         widthOfImageView = widthOfApp
-        heightOfImageView  = (150 * dpScale).toInt()
-        widthOfMyImage = (0.8* widthOfImageView).toInt()
-        heightOfMyImage = (0.8* heightOfImageView).toInt()
+        heightOfImageView = (150 * dpScale).toInt()
+        widthOfMyImage = (0.8 * widthOfImageView).toInt()
+        heightOfMyImage = (0.8 * heightOfImageView).toInt()
         x0OfMyImage = (0.1 * widthOfImageView).toFloat()
         y0OfMyImage = (0.5 * heightOfImageView).toFloat()
         heightOfField *= dpScale
@@ -935,12 +1006,12 @@ class MainActivity : AppCompatActivity() {
     private fun makeArrayOfDate() {
         var isItEnabled: Boolean
         for (i in 0..12) {
-            isItEnabled = !((i==1)||(i>4))
+            isItEnabled = !((i == 1) || (i > 4))
             // make date
             makeNumbersOfText(i, isItEnabled)
             makeLengthsInput(i, isItEnabled)
             makeEIInput(i, isItEnabled)
-            if (i<12) makeSpringInput(i, isItEnabled)
+            if (i < 12) makeSpringInput(i, isItEnabled)
             // make results
             makeResultsAreasMax(i, isItEnabled)
             makeResultsAreasMin(i, isItEnabled)
@@ -1051,7 +1122,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun makeResultsOrdinateMin(i: Int, isItEnabled: Boolean) {
-        if (i==0) {
+        if (i == 0) {
             val nameResultsOrdinateMin = TextView(this)
             // setting height and width
             nameResultsOrdinateMin.layoutParams = LinearLayout.LayoutParams(
@@ -1068,23 +1139,23 @@ class MainActivity : AppCompatActivity() {
             ResultOrdinateMinus.add(TextView(this))
 
             // setting height and width
-            ResultOrdinateMinus[i-1].layoutParams = LinearLayout.LayoutParams(
+            ResultOrdinateMinus[i - 1].layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
             // setting text
-            ResultOrdinateMinus[i-1].text = "0"
-            ResultOrdinateMinus[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
-            ResultOrdinateMinus[i-1].width = widthOfAnElement
-            ResultOrdinateMinus[i-1].isEnabled = isItEnabled
+            ResultOrdinateMinus[i - 1].text = "0"
+            ResultOrdinateMinus[i - 1].textAlignment = View.TEXT_ALIGNMENT_CENTER
+            ResultOrdinateMinus[i - 1].width = widthOfAnElement
+            ResultOrdinateMinus[i - 1].isEnabled = isItEnabled
             // Add EditText to LinearLayout
-            binding.LayoutResultsOrdinateMin?.addView(ResultOrdinateMinus[i-1])
+            binding.LayoutResultsOrdinateMin?.addView(ResultOrdinateMinus[i - 1])
         }
     }
 
 
     private fun makeResultsOrdinateMax(i: Int, isItEnabled: Boolean) {
-        if (i==0) {
+        if (i == 0) {
             val nameResultsOrdinateMin = TextView(this)
             // setting height and width
             nameResultsOrdinateMin.layoutParams = LinearLayout.LayoutParams(
@@ -1101,23 +1172,23 @@ class MainActivity : AppCompatActivity() {
             ResultOrdinatePlus.add(TextView(this))
 
             // setting height and width
-            ResultOrdinatePlus[i-1].layoutParams = LinearLayout.LayoutParams(
+            ResultOrdinatePlus[i - 1].layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
             // setting text
-            ResultOrdinatePlus[i-1].text = "0"
-            ResultOrdinatePlus[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
-            ResultOrdinatePlus[i-1].width = widthOfAnElement
-            ResultOrdinatePlus[i-1].isEnabled = isItEnabled
+            ResultOrdinatePlus[i - 1].text = "0"
+            ResultOrdinatePlus[i - 1].textAlignment = View.TEXT_ALIGNMENT_CENTER
+            ResultOrdinatePlus[i - 1].width = widthOfAnElement
+            ResultOrdinatePlus[i - 1].isEnabled = isItEnabled
             // Add EditText to LinearLayout
-            binding.LayoutResultsOrdinateMax?.addView(ResultOrdinatePlus[i-1])
+            binding.LayoutResultsOrdinateMax?.addView(ResultOrdinatePlus[i - 1])
         }
     }
 
 
     private fun makeResultsAreasMin(i: Int, isItEnabled: Boolean) {
-        if (i==0) {
+        if (i == 0) {
             val nameResultsAreaMin = TextView(this)
             // setting height and width
             nameResultsAreaMin.layoutParams = LinearLayout.LayoutParams(
@@ -1134,23 +1205,23 @@ class MainActivity : AppCompatActivity() {
             ResultAreaMinus.add(TextView(this))
 
             // setting height and width
-            ResultAreaMinus[i-1].layoutParams = LinearLayout.LayoutParams(
+            ResultAreaMinus[i - 1].layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
             // setting text
-            ResultAreaMinus[i-1].text = "0"
-            ResultAreaMinus[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
-            ResultAreaMinus[i-1].width = widthOfAnElement
-            ResultAreaMinus[i-1].isEnabled = isItEnabled
+            ResultAreaMinus[i - 1].text = "0"
+            ResultAreaMinus[i - 1].textAlignment = View.TEXT_ALIGNMENT_CENTER
+            ResultAreaMinus[i - 1].width = widthOfAnElement
+            ResultAreaMinus[i - 1].isEnabled = isItEnabled
             // Add EditText to LinearLayout
-            binding.LayoutResultsAreaMin?.addView(ResultAreaMinus[i-1])
+            binding.LayoutResultsAreaMin?.addView(ResultAreaMinus[i - 1])
         }
     }
 
 
     private fun makeResultsAreasMax(i: Int, isItEnabled: Boolean) {
-        if (i==0) {
+        if (i == 0) {
             val nameResultsAreaMax = TextView(this)
             // setting height and width
             nameResultsAreaMax.layoutParams = LinearLayout.LayoutParams(
@@ -1167,17 +1238,17 @@ class MainActivity : AppCompatActivity() {
             ResultAreaPlus.add(TextView(this))
 
             // setting height and width
-            ResultAreaPlus[i-1].layoutParams = LinearLayout.LayoutParams(
+            ResultAreaPlus[i - 1].layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
             // setting text
-            ResultAreaPlus[i-1].text = "0"
-            ResultAreaPlus[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
-            ResultAreaPlus[i-1].width = widthOfAnElement
-            ResultAreaPlus[i-1].isEnabled = isItEnabled
+            ResultAreaPlus[i - 1].text = "0"
+            ResultAreaPlus[i - 1].textAlignment = View.TEXT_ALIGNMENT_CENTER
+            ResultAreaPlus[i - 1].width = widthOfAnElement
+            ResultAreaPlus[i - 1].isEnabled = isItEnabled
             // onClick the text a message will be displayed "HELLO GEEK"
-            ResultAreaPlus[i-1].setOnClickListener()
+            ResultAreaPlus[i - 1].setOnClickListener()
             {
                 Toast.makeText(
                     this@MainActivity, "HELLO GEEK LENGTH",
@@ -1185,11 +1256,11 @@ class MainActivity : AppCompatActivity() {
                 ).show()
             }
             // Add EditText to LinearLayout
-            binding.LayoutResultsAreaMax?.addView(ResultAreaPlus[i-1])
+            binding.LayoutResultsAreaMax?.addView(ResultAreaPlus[i - 1])
         }
     }
 
-    private fun makeResults(){
+    private fun makeResults() {
         val nameResults = TextView(this)
         // setting height and width
         nameResults.layoutParams = LinearLayout.LayoutParams(
@@ -1204,7 +1275,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun otherData(){
+    private fun otherData() {
         val nameOtherDate = TextView(this)
         // setting height and width
         nameOtherDate.layoutParams = LinearLayout.LayoutParams(
@@ -1218,8 +1289,8 @@ class MainActivity : AppCompatActivity() {
         binding.LayoutDateBelow?.addView(nameOtherDate)
     }
 
-    private fun makeCheckBaxDrawCurve(i: Int){
-        if (i==0) {
+    private fun makeCheckBaxDrawCurve(i: Int) {
+        if (i == 0) {
             val nameDrawCurve = TextView(this)
             // setting height and width
             nameDrawCurve.layoutParams = LinearLayout.LayoutParams(
@@ -1229,7 +1300,7 @@ class MainActivity : AppCompatActivity() {
             // setting text
             nameDrawCurve.setText(R.string.drawACurve)
             nameDrawCurve.textAlignment = View.TEXT_ALIGNMENT_CENTER
-            nameDrawCurve.width = 2*widthOfCheckBox
+            nameDrawCurve.width = 2 * widthOfCheckBox
             // Add EditText to LinearLayout
             binding.LayoutDrawACurveMQd?.addView(nameDrawCurve)
         } else {
@@ -1241,25 +1312,28 @@ class MainActivity : AppCompatActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
             // setting text
-            when (i-4){
-                -3 ->    {CheckBoxDrawCurve[i - 1].text = "M"
+            when (i - 4) {
+                -3 -> {
+                    CheckBoxDrawCurve[i - 1].text = "M"
                     CheckBoxDrawCurve[i - 1].isChecked = true
                     // Add CheckBox to LinearLayout
                     binding.LayoutDrawACurveMQd?.addView(CheckBoxDrawCurve[i - 1])
                 }
-                -2 ->    {CheckBoxDrawCurve[i - 1].text = "Q"
+                -2 -> {
+                    CheckBoxDrawCurve[i - 1].text = "Q"
                     // Add CheckBox to LinearLayout
                     binding.LayoutDrawACurveMQd?.addView(CheckBoxDrawCurve[i - 1])
                 }
-                -1 ->    {CheckBoxDrawCurve[i - 1].text = "δ"
+                -1 -> {
+                    CheckBoxDrawCurve[i - 1].text = "δ"
                     // Add CheckBox to LinearLayout
                     binding.LayoutDrawACurveMQd?.addView(CheckBoxDrawCurve[i - 1])
                 }
-                else ->  {
-                    CheckBoxDrawCurve[i - 1].text = "R"+ (i-4).toString()
+                else -> {
+                    CheckBoxDrawCurve[i - 1].text = "R" + (i - 4).toString()
                     // Add CheckBox to LinearLayout
                     binding.LayoutDrawACurveReaction?.addView(CheckBoxDrawCurve[i - 1])
-                    if (i-4>3) {
+                    if (i - 4 > 3) {
                         CheckBoxDrawCurve[i - 1].isEnabled = false
                     }
                 }
@@ -1277,8 +1351,8 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun makeSpringInput(i: Int, isItEnabled: Boolean){
-        if (i==0) {
+    private fun makeSpringInput(i: Int, isItEnabled: Boolean) {
+        if (i == 0) {
             checkSprings = CheckBox(this)
             // setting height and width
             checkSprings.layoutParams = LinearLayout.LayoutParams(
@@ -1288,38 +1362,39 @@ class MainActivity : AppCompatActivity() {
             // setting text
             checkSprings.setText(R.string.springs)
             checkSprings.textAlignment = View.TEXT_ALIGNMENT_CENTER
-            checkSprings.width = (widthOfAnElement*1.5).toInt()
+            checkSprings.width = (widthOfAnElement * 1.5).toInt()
             // Add EditText to LinearLayout
             binding.LayoutSprings?.addView(checkSprings)
             checkSprings.setOnClickListener()
-            { openAllSprings()
+            {
+                openAllSprings()
             }
         } else {
             SpringInput.add(EditText(this))
 
             // setting height and width
-            SpringInput[i-1].layoutParams = LinearLayout.LayoutParams(
+            SpringInput[i - 1].layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
             // setting text
-            SpringInput[i-1].setText("1")
-            SpringInput[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
-            SpringInput[i-1].width = widthOfAnElement
-            SpringInput[i-1].isEnabled = false
-            SpringInput[i-1].inputType = InputType.TYPE_CLASS_NUMBER or
+            SpringInput[i - 1].setText("1")
+            SpringInput[i - 1].textAlignment = View.TEXT_ALIGNMENT_CENTER
+            SpringInput[i - 1].width = widthOfAnElement
+            SpringInput[i - 1].isEnabled = false
+            SpringInput[i - 1].inputType = InputType.TYPE_CLASS_NUMBER or
                     InputType.TYPE_NUMBER_FLAG_DECIMAL
-            SpringInput[i-1].imeOptions = 1
+            SpringInput[i - 1].imeOptions = 1
             // check data of k
-            checkInputData(SpringInput[i-1], i-1, "springs")
+            checkInputData(SpringInput[i - 1], i - 1, "springs")
             // Add EditText to LinearLayout
-            binding.LayoutSprings?.addView(SpringInput[i-1])
+            binding.LayoutSprings?.addView(SpringInput[i - 1])
         }
     }
 
 
-    private fun makeEIInput(i: Int, isItEnabled: Boolean){
-        if (i==0) {
+    private fun makeEIInput(i: Int, isItEnabled: Boolean) {
+        if (i == 0) {
             val nameEI = TextView(this)
             // setting height and width
             nameEI.layoutParams = LinearLayout.LayoutParams(
@@ -1336,53 +1411,61 @@ class MainActivity : AppCompatActivity() {
             EIInput.add(EditText(this))
 
             // setting height and width
-            EIInput[i-1].layoutParams = LinearLayout.LayoutParams(
+            EIInput[i - 1].layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
             // setting text
-            EIInput[i-1].setText("1")
-            EIInput[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
-            EIInput[i-1].width = widthOfAnElement
-            EIInput[i-1].isEnabled = isItEnabled
-            EIInput[i-1].inputType = InputType.TYPE_CLASS_NUMBER or
+            EIInput[i - 1].setText("1")
+            EIInput[i - 1].textAlignment = View.TEXT_ALIGNMENT_CENTER
+            EIInput[i - 1].width = widthOfAnElement
+            EIInput[i - 1].isEnabled = isItEnabled
+            EIInput[i - 1].inputType = InputType.TYPE_CLASS_NUMBER or
                     InputType.TYPE_NUMBER_FLAG_DECIMAL
-            EIInput[i-1].imeOptions = 1
+            EIInput[i - 1].imeOptions = 1
             // check the data of EI
-            checkInputData(EIInput[i-1], i-1, "EI")
+            checkInputData(EIInput[i - 1], i - 1, "EI")
             // Add EditText to LinearLayout
-            binding.LayoutEI?.addView(EIInput[i-1])
+            binding.LayoutEI?.addView(EIInput[i - 1])
         }
     }
 
-    private fun checkInputData(editText: EditText, index: Int, lengthIEorSprings: String) { // check if input > 0,
+    private fun checkInputData(
+        editText: EditText,
+        index: Int,
+        lengthIEorSprings: String
+    ) { // check if input > 0,
         // index - number of editText and field
         // lengthIEorSprings - what I have to check
-        editText.addTextChangedListener(object: TextWatcher {
+        editText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
             }
+
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
 
             }
+
             override fun afterTextChanged(p0: Editable?) {
                 try {
-                    if (p0.toString().toFloat()>0){
+                    if (p0.toString().toFloat() > 0) {
                         when (lengthIEorSprings) {
-                            "length" -> { f[index].l1 = p0.toString().toFloat()
-                                    sendBeginningOfTheField() }
-                            "EI"    ->  {f[index].ei1 = p0.toString().toFloat()
+                            "length" -> {
+                                f[index].l1 = p0.toString().toFloat()
+                                sendBeginningOfTheField()
                             }
-                            "springs" -> {k_ber[index] = 1/p0.toString().toFloat()
+                            "EI" -> {
+                                f[index].ei1 = p0.toString().toFloat()
+                            }
+                            "springs" -> {
+                                k_ber[index] = 1 / p0.toString().toFloat()
                             }
                         }
                         LengthsInput[index].error = null
                         drawAll()
-                    }
-                    else {
+                    } else {
                         LengthsInput[index].error = getString(R.string.wrong)
                     }
-                }
-                catch (exception: NumberFormatException) {
+                } catch (exception: NumberFormatException) {
                     LengthsInput[index].error = getString(R.string.wrong)
                 }
             }
@@ -1390,8 +1473,8 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun makeLengthsInput(i: Int, isItEnabled: Boolean){
-        if (i==0) {
+    private fun makeLengthsInput(i: Int, isItEnabled: Boolean) {
+        if (i == 0) {
             val nameLength = TextView(this)
             // setting height and width
             nameLength.layoutParams = LinearLayout.LayoutParams(
@@ -1401,28 +1484,28 @@ class MainActivity : AppCompatActivity() {
             // setting text
             nameLength.setText(R.string.length)
             nameLength.textAlignment = View.TEXT_ALIGNMENT_CENTER
-            nameLength .width = widthOfAnElement
+            nameLength.width = widthOfAnElement
             // Add EditText to LinearLayout
             binding.LayoutLength.addView(nameLength)
         } else {
             LengthsInput.add(EditText(this))
             // setting height and width
-            LengthsInput[i-1].layoutParams = LinearLayout.LayoutParams(
+            LengthsInput[i - 1].layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
             // setting text
-            LengthsInput[i-1].setText("5")
-            LengthsInput[i-1].textAlignment = View.TEXT_ALIGNMENT_CENTER
-            LengthsInput[i-1].width = widthOfAnElement
-            LengthsInput[i-1].isEnabled = isItEnabled
-            LengthsInput[i-1].inputType = InputType.TYPE_CLASS_NUMBER or
+            LengthsInput[i - 1].setText("5")
+            LengthsInput[i - 1].textAlignment = View.TEXT_ALIGNMENT_CENTER
+            LengthsInput[i - 1].width = widthOfAnElement
+            LengthsInput[i - 1].isEnabled = isItEnabled
+            LengthsInput[i - 1].inputType = InputType.TYPE_CLASS_NUMBER or
                     InputType.TYPE_NUMBER_FLAG_DECIMAL
-            LengthsInput[i-1].imeOptions = 1
+            LengthsInput[i - 1].imeOptions = 1
             // check the data of length
-            checkInputData(LengthsInput[i-1], i-1, "length")
+            checkInputData(LengthsInput[i - 1], i - 1, "length")
             // Add EditText to LinearLayout
-            binding.LayoutLength.addView(LengthsInput[i-1])
+            binding.LayoutLength.addView(LengthsInput[i - 1])
         }
     }
 
@@ -1430,8 +1513,8 @@ class MainActivity : AppCompatActivity() {
     private fun sendBeginningOfTheField() {
         f[0].l0 = 0f
         for (index in 1..numberOfFields) {
-            f[index].l0 = f[index-1].l0 +
-                    f[index-1].l1
+            f[index].l0 = f[index - 1].l0 +
+                    f[index - 1].l1
         }
         if (lastConsoleIsUsed) {
             f[numberOfFields + 1].l0 = f[numberOfFields].l0 +
@@ -1440,7 +1523,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun makeNumbersOfText(i: Int, isItEnabled: Boolean){
+    private fun makeNumbersOfText(i: Int, isItEnabled: Boolean) {
         NumbersOfTextView.add(TextView(this))
         // setting height and width
         NumbersOfTextView[i].layoutParams = LinearLayout.LayoutParams(
@@ -1450,9 +1533,8 @@ class MainActivity : AppCompatActivity() {
         // setting text
         if (i == 0) {
             NumbersOfTextView[i].text = ("<b>N</b>").toSpanned()
-        }
-        else {
-            NumbersOfTextView[i].text = (i-1).toString()
+        } else {
+            NumbersOfTextView[i].text = (i - 1).toString()
         }
         NumbersOfTextView[i].textAlignment = View.TEXT_ALIGNMENT_CENTER
         NumbersOfTextView[i].width = widthOfAnElement
@@ -1461,7 +1543,7 @@ class MainActivity : AppCompatActivity() {
         binding.LayoutNumbers?.addView(NumbersOfTextView[i])
     }
 
-    private fun plusButton(){
+    private fun plusButton() {
         // plus button
         binding.btnPlusAField?.setOnClickListener {
             numberOfFields++
@@ -1471,8 +1553,8 @@ class MainActivity : AppCompatActivity() {
             binding.btnMinusAField?.isEnabled = true    //  make enable minusButton
             // make enable data for the field
             val enableNumberOfField: Int = if (lastConsoleIsUsed) (numberOfFields + 1)
-                                                                else numberOfFields
-            NumbersOfTextView[enableNumberOfField+1].isEnabled = true
+            else numberOfFields
+            NumbersOfTextView[enableNumberOfField + 1].isEnabled = true
             LengthsInput[enableNumberOfField].isEnabled = true
             EIInput[enableNumberOfField].isEnabled = true
             if (checkSprings.isChecked) {
@@ -1499,9 +1581,8 @@ class MainActivity : AppCompatActivity() {
         var l0 = 0f
         try {
             l = LengthsInput[numberOfNeuField].text.toString().toFloat()
-            l0 = f[numberOfNeuField-1].l0 + f[numberOfNeuField-1].l1
-        }
-        catch (exception: NumberFormatException) {
+            l0 = f[numberOfNeuField - 1].l0 + f[numberOfNeuField - 1].l1
+        } catch (exception: NumberFormatException) {
             LengthsInput[numberOfNeuField].error = getString(R.string.wrong)
             l = 10f
         }
@@ -1509,8 +1590,7 @@ class MainActivity : AppCompatActivity() {
         var EI: Float
         try {
             EI = EIInput[numberOfNeuField].text.toString().toFloat()
-        }
-        catch (exception: NumberFormatException) {
+        } catch (exception: NumberFormatException) {
             EIInput[numberOfNeuField].error = getString(R.string.wrong)
             EI = 1f
         }
@@ -1529,28 +1609,28 @@ class MainActivity : AppCompatActivity() {
             // make unenable data for the field
             val unEnableNumberOfField: Int = if (lastConsoleIsUsed) (numberOfFields + 2)
             else (numberOfFields + 1)
-            NumbersOfTextView[unEnableNumberOfField+1].isEnabled = false
+            NumbersOfTextView[unEnableNumberOfField + 1].isEnabled = false
             LengthsInput[unEnableNumberOfField].isEnabled = false
-            EIInput[unEnableNumberOfField ].isEnabled = false
+            EIInput[unEnableNumberOfField].isEnabled = false
             if (checkSprings.isChecked) {
                 SpringInput[numberOfFields].isEnabled = false
             }
-            CheckBoxDrawCurve[numberOfFields+4].isEnabled = false
+            CheckBoxDrawCurve[numberOfFields + 4].isEnabled = false
             ResultAreaPlus[unEnableNumberOfField].isEnabled = false
             ResultAreaMinus[unEnableNumberOfField].isEnabled = false
             ResultOrdinatePlus[unEnableNumberOfField].isEnabled = false
             ResultOrdinateMinus[unEnableNumberOfField].isEnabled = false
 
             arrayOfNumbersFields.remove(arrayOfNumbersFields.size)
-            if (unEnableNumberOfField == currentField) {
-                currentField --
+            if (unEnableNumberOfField == fieldOfTheSection) {
+                fieldOfTheSection--
             }
             if (currentGraph[0] == 'R') {
                 var numberOfGraph: Int = (currentGraph.substringAfter('R')).toInt()
-                if (unEnableNumberOfField == numberOfGraph){
-                    CheckBoxDrawCurve[numberOfGraph+3].isChecked= false
-                    numberOfGraph --
-                    CheckBoxDrawCurve[numberOfGraph+3].isChecked = true
+                if (unEnableNumberOfField == numberOfGraph) {
+                    CheckBoxDrawCurve[numberOfGraph + 3].isChecked = false
+                    numberOfGraph--
+                    CheckBoxDrawCurve[numberOfGraph + 3].isChecked = true
                     currentGraph = "R$numberOfGraph"
                 }
             }
@@ -1565,7 +1645,7 @@ class MainActivity : AppCompatActivity() {
         minusButton()
     }
 
-    private fun drawAGraphListener(index: Int){
+    private fun drawAGraphListener(index: Int) {
         for (i in CheckBoxDrawCurve) {
             i.isChecked = false
         }
@@ -1581,9 +1661,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun sendFunctionToCheckBoxes(){
+    private fun sendFunctionToCheckBoxes() {
         binding.chbConsoleBeginning?.setOnClickListener {
-            if (binding.chbConsoleBeginning!!.isChecked){
+            if (binding.chbConsoleBeginning!!.isChecked) {
                 firstConsoleIsUsed = true
                 NumbersOfTextView[0].isEnabled = true
                 LengthsInput[0].isEnabled = true
@@ -1592,8 +1672,7 @@ class MainActivity : AppCompatActivity() {
                 ResultAreaMinus[0].isEnabled = true
                 ResultOrdinatePlus[0].isEnabled = true
                 ResultOrdinateMinus[0].isEnabled = true
-            }
-            else {
+            } else {
                 firstConsoleIsUsed = true
                 NumbersOfTextView[0].isEnabled = false
                 LengthsInput[0].isEnabled = false
@@ -1606,10 +1685,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.chbConsoleEnd?.setOnClickListener {
-            if (binding.chbConsoleEnd!!.isChecked){
+            if (binding.chbConsoleEnd!!.isChecked) {
                 lastConsoleIsUsed = true
                 val enableNumberOfField = numberOfFields + 1
-                NumbersOfTextView[enableNumberOfField+1].isEnabled = true
+                NumbersOfTextView[enableNumberOfField + 1].isEnabled = true
                 LengthsInput[enableNumberOfField].isEnabled = true
                 EIInput[enableNumberOfField].isEnabled = true
                 if (checkSprings.isChecked) {
@@ -1620,8 +1699,7 @@ class MainActivity : AppCompatActivity() {
                 ResultAreaMinus[enableNumberOfField].isEnabled = true
                 ResultOrdinatePlus[enableNumberOfField].isEnabled = true
                 ResultOrdinateMinus[enableNumberOfField].isEnabled = true
-            }
-            else {
+            } else {
                 lastConsoleIsUsed = false
                 val enableNumberOfField = numberOfFields + 1
                 NumbersOfTextView[enableNumberOfField + 1].isEnabled = false
@@ -1638,6 +1716,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun openAllSprings(){
         if (checkSprings.isChecked) {
             for (i in 0..numberOfFields) {
@@ -1654,15 +1733,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-}
 
-
-
-fun String.toSpanned() : Spanned {      // make style from HTML
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        return Html.fromHtml(this, Html.FROM_HTML_MODE_LEGACY)
-    } else {
-        @Suppress("DEPRECATION")
-        return Html.fromHtml(this)
+    fun String.toSpanned() : Spanned {      // make style from HTML
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            return Html.fromHtml(this, Html.FROM_HTML_MODE_LEGACY)
+        } else {
+            @Suppress("DEPRECATION")
+            return Html.fromHtml(this)
+        }
     }
 }
