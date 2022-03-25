@@ -15,6 +15,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.example.ner.databinding.ActivityMainBinding
+import kotlin.math.abs
 import kotlin.math.pow
 
 var numberOfFields: Int = 3
@@ -30,6 +31,7 @@ var firstNumber: Int = 1
 var lastNumber: Int = 3
 var k_ber: ArrayList<Float> = arrayListOf(1f, 1f, 1f, 1f)
 var xx: ArrayList<Float> = ArrayList()
+lateinit var checkSprings: CheckBox
 
 // coordinate for all cases
 var xg: ArrayList<Float> = ArrayList()
@@ -338,15 +340,14 @@ private fun solveIt(x1: Float, n1: Int) {
 }
 
 
-private fun gaussPivotFunc(matrix: Array<Array<Float>>): Array<Array<Float>> {
-    var result: Array<Array<Float>>
+private fun gaussPivotFunc(matrix: Array<FloatArray>): Array<FloatArray> {
+    var result: Array<FloatArray>
 
-    return result?
+    return result
 }
 
 
 private fun makeResultManyFields(x1: Float, n1: Int) {
-    var rx: FloatArray = FloatArray(numberOfFields)       // coefficients for bearings
     val nn: Int = numberOfFields
     val nSec: Int = fieldOfTheSection
     val n0: Int = if (firstConsoleIsUsed) 0 else 1
@@ -355,6 +356,7 @@ private fun makeResultManyFields(x1: Float, n1: Int) {
     val mx: Float
     val qx: Float
     val dx: Float
+    val rx: FloatArray = FloatArray(numberOfFields)
 
     when (nSec) {
         1 -> {  //# the first field
@@ -402,6 +404,8 @@ private fun makeResultManyFields(x1: Float, n1: Int) {
                     nSec - 1] - (2 * f[nSec].l1 - dSec) * dSec * (f[nSec].l1 - dSec) / (6 * f[nSec].ei1 * f[nSec].l1) * xx[nSec - 2]
         }
     }
+    makeM0(x1, n1,
+        nn, nSec, n0, n2, dSec, mx, qx, dx, rx)
 }
 
 
@@ -414,7 +418,7 @@ private fun makeResultOneField(x1: Float, n1: Int) {
     val mx: Float
     val qx: Float
     val dx: Float
-    var rx: Array<Float> = arrayOf(0f, 0f)       // coefficients for bearings
+    val rx: Array<Float> = arrayOf(0f, 0f)       // coefficients for bearings
 
     if ((n1 == 0) and (nSec == 1)) {
         //# the last is on the console at the beginning
@@ -433,11 +437,10 @@ private fun makeResultOneField(x1: Float, n1: Int) {
     }
     else { //  # there is an intermediate field, the last is on the console
         if (nSec == 0) { //  # the section is on the first field
-            if (n1 == 1) { //  # last is on an intermediate  field
-                dx =
-                    (2 * f[1].l1 - x1) * x1 * (f[1].l1 - x1) * (f[0].l1 - dSec) / (6 * f[1].l1 * f[1].ei1)
+            dx = if (n1 == 1) { //  # last is on an intermediate  field
+                (2 * f[1].l1 - x1) * x1 * (f[1].l1 - x1) * (f[0].l1 - dSec) / (6 * f[1].l1 * f[1].ei1)
             } else { //# last is on the last field
-                dx = -x1 * (f[0].l1 - dSec) * f[1].l1 / (6 * f[1].ei1)
+                -x1 * (f[0].l1 - dSec) * f[1].l1 / (6 * f[1].ei1)
             }
         }
         else if (nSec == nn +1) { //  # the section is on the last field
@@ -453,143 +456,221 @@ private fun makeResultOneField(x1: Float, n1: Int) {
             }
         }
     }
+    makeM0(x1, n1, nn, nSec, n0, n2, dSec, mx, qx, dx, rx)
 }
 
-    if nSec == n1:  # + M0
-    if n1 == 0:  # there is a console at the beginning
-    if dSec >= x1:
-    mx = -x1 + dSec
-    qx = -1
-    dx = - ((f[0].l1 - x1) * (f[0].l1 - dSec) * f[1].l1 / (3 * f[1].ei1) \
-    + ((f[0].l1 - x1) * 0.5 - (f[0].l1 - dSec) / 6) * (f[0].l1 - dSec) ** 2 / f[0].ei1)
-    else:
-    mx = 0
-    qx = 0
-    dx = - ((f[0].l1 - x1) * (f[0].l1 - dSec) * f[1].l1 / (3 * f[1].ei1) \
-    + ((f[0].l1 - x1) * (f[0].l1 - dSec) * 0.5 - (f[0].l1 - x1) ** 2 / 6) * (f[0].l1 - x1) / f[
-    0].ei1)
-    elif n1 == nn + 1:  # there is a console at the end
-    if x1 > dSec:
-    mx = x1 - dSec
-    qx = 1
-    dx = - x1 * dSec * f[nn].l1 / (3 * f[nn].ei1) \
-    - (x1 * 0.5 - dSec / 6) * dSec ** 2 / f[nn + 1].ei1
-    else:  # x1 < d_sec
-    mx = 0
-    qx = 0
-    dx = - x1 * dSec * f[nn].l1 / (3 * f[nn].ei1) \
-    - (x1 * dSec * 0.5 - x1 ** 2 / 6) * x1 / f[nn + 1].ei1
-    else:  # there is an intermediate field, GENERAL CASE
-    if x1 <= dSec:
-    mx = mx - (x1 * (f[nSec].l1 - x1) / f[nSec].l1) * (f[nSec].l1 - dSec) / (f[nSec].l1 - x1)
-    qx = qx + x1 / f[nSec].l1
-    b1 = f[nSec].l1 - x1
-    dx = dx - b1 * dSec / (6 * f[nSec].ei1 * f[nSec].l1) * (f[nSec].l1 ** 2 - b1 ** 2 - d_sec ** 2) - (
-    dSec - x1) ** 3 / (6 * f[n_sec].ei1)
-    else:  # x1 > d_sec
-    if x1 == 0 and n1 != 0:
-    mx = 0
-    qx = 0
-    dx = 0
-    else:
-    mx = mx - (x1 * (f[nSec].l1 - x1) / f[nSec].l1) * dSec / x1
-    qx = qx - (f[nSec].l1 - x1) / f[nSec].l1
-    b1 = f[nSec].l1 - x1
-    dx = dx - b1 * dSec / (6 * f[nSec].ei1 * f[nSec].l1) * (f[nSec].l1 ** 2 - b1 ** 2 - d_sec ** 2)
+private fun makeM0(
+    x1: Float,
+    n1: Int,
+    nn: Int,
+    nSec: Int,
+    n0: Int,
+    n2: Int,
+    dSec: Float,
+    mx1: Float,
+    qx1: Float,
+    dx1: Float,
+    rx: FloatArray
+) {
+    var mx: Float = mx1
+    var qx: Float = qx1
+    var dx: Float = dx1
 
-    # + M0 2
-    if nSec == 0 and n1 == 1 and nn != 1:
-    dx = dx + (2 * f[1].l1 - x1) * x1 * (f[1].l1 - x1) * (f[0].l1 - dSec) / (
-            6 * f[1].l1 * f[1].ei1)  # the first field
-    if nSec == nn + 1 and n1 == nn and nn != 1:
-    dx = dx + (f[nn].l1 + x1) * x1 * (f[nn].l1 - x1) * dSec / (6 * f[nn].l1 * f[nn].ei1)  # the last field
-}
-
-
-private fun makeReaction() {
-    # reactions
-    if nn > 1:
-    if n1 == 1:  # first field
-    rx[0] = - 1 + x1 / f[1].l1
-    rx[1] = - x1 / f[1].l1
-    elif n1 == nn:  # last field
-    rx[nn] = - x1 / f[nn].l1
-    rx[nn - 1] = - 1 + x1 / f[nn].l1
-    elif n1 == 0:  # we are on the first console
-    rx[0] = - (f[0].l1 - x1 + f[1].l1) / f[1].l1
-    rx[1] = (f[0].l1 - x1) / f[1].l1
-    elif n1 == nn + n2:  # we are on the last console
-    rx[nn] = -(f[nn].l1 + x1) / f[nn].l1
-    rx[nn - 1] = x1 / f[nn].l1
-    else:
-    rx[n1 - 1] = rx[n1 - 1] - 1 + x1 / f[n1].l1  # an intermediate field + M0
-    rx[n1] = rx[n1] - x1 / f[n1].l1
-
-    rx[0] = rx[0] - xx[0] / f[1].l1  # first field
-    rx[1] = rx[1] + xx[0] / f[1].l1
-    for i in range(2, nn):  # all intermediate fields, GENERAL CASE
-    rx[i - 1] = rx[i - 1] - xx[i - 1] / f[i].l1 + xx[i - 2] / f[i].l1
-    rx[i] = rx[i] + xx[i - 1] / f[i].l1 - xx[i - 2] / f[i].l1
-    rx[nn] = rx[nn] - xx[nn - 2] / f[nn].l1  # last field
-    rx[nn - 1] = rx[nn - 1] + xx[nn - 2] / f[nn].l1
-
-    xg.append(x1 + f[n1].l01)
-    mg.append(mx)
-    qg.append(qx)
-
-    if spr == 1:  # there are springs
-    if n_sec == 0:  # console at the beginning
-    dx = dx + inter1(k_ber[0] * rx[0], k_ber[1] * rx[1], f[1].l1, - (f[1].l1 + f[0].l1 - d_sec))
-    elif n_sec == nn + 1:  # console at the end
-    dx = dx + inter1(k_ber[nn - 1] * rx[nn - 1], k_ber[nn] * rx[nn], f[nn].l1, f[nn].l1 + d_sec)
-    else:  # general case
-    dx = dx + inter1(k_ber[n_sec - 1] * rx[n_sec - 1], k_ber[n_sec] * rx[n_sec], f[n_sec].l1, d_sec)
-    else:
-    if d_sec == 0 or d_sec == f[n_sec].l1:
-    dx = 0
-
-    dg.append(dx)
-    for i in range(0, nn + 1):
-    rg[i].append(rx[i])
-}
-
-private fun gaussPivotFunc(matrix: ArrayList<Float>){
-    for nrow in range(len(matrix)):
-    # nrow равен номеру строки
-    # np.argmax возвращает номер строки с максимальным элементом в уменьшенной матрице
-    # которая начинается со строки nrow.Поэтому нужно прибавить nrow к результату
-            pivot = nrow + np.argmax(abs(matrix[nrow:, nrow]))
-    if pivot != nrow:
-    # swap
-    # matrix[nrow], matrix[pivot] = matrix[pivot], matrix[nrow]-не работает.
-    # нужно переставлять строки именно так, как написано ниже
-    matrix[[nrow, pivot]] = matrix[[pivot, nrow]]
-    row = matrix[nrow]
-    divider = row[nrow]  # диагональный элемент
-    if abs(divider) < 1e-10:
-    # почти нуль на диагонали . Продолжать не имеет смысла, результат счёта неустойчив
-    raise ValueError (f"Матрица несовместна. Максимальный элемент в столбце {nrow}: {divider:.3g}")
-    # делим на диагональный элемент .
-    row /= divider
-    # теперь надо вычесть приведённую строку из всех нижележащих строчек
-    for lower_row in matrix[nrow + 1:]:
-    factor = lower_row[nrow]  # элемент строки в колонке nrow
-    lower_row -= factor * row  # вычитаем, чтобы получить ноль в колонке nrow
-    # приводим к диагональному виду
-            make_identity(matrix)
-    return matrix
-}
-
-
-private fun makeIdentity(matrix: ArrayList<Float>){
-    //# перебор строк в обратном порядке
-    for (nrow in matrix.size - 1..0, step -1) {
-        row = matrix[nrow]
+    val b1: Float
+    if (nSec == n1) {  //# + M0
+        if (n1 == 0) { //# there is a console at the beginning
+            if (dSec >= x1) {
+                mx = -x1 + dSec
+                qx = -1f
+                dx = (-((f[0].l1 - x1) * (f[0].l1 - dSec) * f[1].l1 / (3 * f[1].ei1)
+                        + ((f[0].l1 - x1) * 0.5 - (f[0].l1 - dSec) / 6) * (f[0].l1 - dSec).pow(2) / f[0].ei1)).toFloat()
+            } else {
+                mx = 0f
+                qx = 0f
+                dx = (-((f[0].l1 - x1) * (f[0].l1 - dSec) * f[1].l1 / (3 * f[1].ei1)
+                        + ((f[0].l1 - x1) * (f[0].l1 - dSec) * 0.5 - (f[0].l1 - x1).pow(2) / 6) * (f[0].l1 - x1) / f[0].ei1)).toFloat()
+            }
+        }
+        else if (n1 == nn + 1) {  //   # there is a console at the end
+            if (x1 > dSec) {
+                mx = x1 - dSec
+                qx = 1f
+                dx = -x1 * dSec * f[nn].l1 / (3 * f[nn].ei1)
+                -(x1 * 0.5 - dSec / 6) * dSec.pow(2) / f[nn + 1].ei1
+            } else {  //# x1 < d_sec
+                mx = 0f
+                qx = 0f
+                dx =
+                    (-x1 * dSec * f[nn].l1 / (3 * f[nn].ei1) - (x1 * dSec * 0.5 - x1.pow(2) / 6) * x1 / f[nn + 1].ei1).toFloat()
+            }
+        }
+        else {  //# there is an intermediate field, GENERAL CASE
+            if (x1 <= dSec) {
+                mx -= (x1 * (f[nSec].l1 - x1) / f[nSec].l1) * (f[nSec].l1 - dSec) / (f[nSec].l1 - x1)
+                qx += x1 / f[nSec].l1
+                b1 = f[nSec].l1 - x1
+                dx =
+                    dx - b1 * dSec / (6 * f[nSec].ei1 * f[nSec].l1) * (f[nSec].l1.pow(2) - b1.pow(
+                        2
+                    ) - dSec.pow(2)) - (dSec - x1).pow(3) / (6 * f[nSec].ei1)
+            } else {//  # x1 > d_sec
+                if ((x1 == 0f) and (n1 != 0)) {
+                    mx = 0f
+                    qx = 0f
+                    dx = 0f
+                } else {
+                    mx -= (x1 * (f[nSec].l1 - x1) / f[nSec].l1) * dSec / x1
+                    qx -= (f[nSec].l1 - x1) / f[nSec].l1
+                    b1 = f[nSec].l1 - x1
+                    dx -= b1 * dSec / (6 * f[nSec].ei1 * f[nSec].l1) * (f[nSec].l1.pow(2) - b1.pow(
+                        2
+                    ) - dSec.pow(2))
+                }
+            }
+        }
     }
-    for upper_row in matrix[:nrow]:
-    factor = upper_row[nrow]
-    upper_row -= factor * row
-    return matrix
+
+        //# + M0 2
+        // # the first field
+    if ((nSec == 0) and (n1 == 1) and (nn != 1)){
+        dx += (2 * f[1].l1 - x1) * x1 * (f[1].l1 - x1) * (f[0].l1 - dSec) / (
+                6 * f[1].l1 * f[1].ei1)
+        }
+    if ((nSec == nn + 1) and (n1 == nn) and (nn != 1)) {
+        dx += (f[nn].l1 + x1) * x1 * (f[nn].l1 - x1) * dSec / (6 * f[nn].l1 * f[nn].ei1)
+    } // # the last field
+
+    makeReaction(x1, n1,
+        nn, nSec, n0, n2, dSec, mx, qx, dx, rx)
+}
+
+
+private fun makeReaction(x1: Float, n1: Int,
+                         nn: Int,
+                         nSec: Int,
+                         n0: Int,
+                         n2: Int,
+                         dSec: Float,
+                         mx: Float,
+                         qx: Float,
+                         dx: Float,
+                         rx: FloatArray) {
+    //# reactions
+    if (nn > 1) {
+        when (n1) {
+            1 -> { //  # first field
+                rx[0] = -1 + x1 / f[1].l1
+                rx[1] = -x1 / f[1].l1
+            }
+            nn -> {  //# last field
+                rx[nn] = -x1 / f[nn].l1
+                rx[nn - 1] = -1 + x1 / f[nn].l1
+            }
+            0 -> { //  # we are on the first console
+                rx[0] = -(f[0].l1 - x1 + f[1].l1) / f[1].l1
+                rx[1] = (f[0].l1 - x1) / f[1].l1
+            }
+            nn + n2 -> {  //# we are on the last console
+                rx[nn] = -(f[nn].l1 + x1) / f[nn].l1
+                rx[nn - 1] = x1 / f[nn].l1
+            }
+            else -> {
+                rx[n1 - 1] = rx[n1 - 1] - 1 + x1 / f[n1].l1  //# an intermediate field+M0
+                rx[n1] = rx[n1] - x1 / f[n1].l1
+            }
+        }
+
+        rx[0] = rx[0] - xx[0] / f[1].l1  //# first field
+        rx[1] = rx[1] + xx[0] / f[1].l1
+        for (i in 2 until nn) { //  # all intermediate fields, GENERAL CASE
+            rx[i - 1] = rx[i - 1] - xx[i - 1] / f[i].l1 + xx[i - 2] / f[i].l1
+            rx[i] = rx[i] + xx[i - 1] / f[i].l1 - xx[i - 2] / f[i].l1
+            rx[nn] = rx[nn] - xx[nn - 2] / f[nn].l1  //# last field
+            rx[nn - 1] = rx[nn - 1] + xx[nn - 2] / f[nn].l1
+        }
+    }
+
+appendData(x1, n1,
+    nn, nSec, n0, n2, dSec, mx, qx, dx, rx)
+}
+
+
+private fun appendData(x1: Float, n1: Int,
+                       nn: Int,
+                       nSec: Int,
+                       n0: Int,
+                       n2: Int,
+                       dSec: Float,
+                       mx: Float,
+                       qx: Float,
+                       dx1: Float,
+                       rx: FloatArray) {
+    var dx: Float = dx1
+    xg.add(x1 + f[n1].l01)
+    mg.add(mx)
+    qg.add(qx)
+
+    if (checkSprings.isChecked) { //  # there are springs
+        if (nSec == 0) {
+            // # console at the beginning
+            dx += inter1(
+                k_ber[0] * rx[0],
+                k_ber[1] * rx[1],
+                f[1].l1,
+                -(f[1].l1 + f[0].l1 - dSec)
+            )
+        } else if (nSec == nn + 1) {//   # console at the end
+            dx += inter1(
+                k_ber[nn - 1] * rx[nn - 1],
+                k_ber[nn] * rx[nn],
+                f[nn].l1,
+                f[nn].l1 + dSec
+            )
+        } else { //# general case
+            dx += inter1(
+                k_ber[nSec - 1] * rx[nSec - 1],
+                k_ber[nSec] * rx[nSec],
+                f[nSec].l1,
+                dSec
+            )
+        }
+    }
+    else {
+        if ((dSec == 0f) or (dSec == f[nSec].l1)) {
+            dx = 0f
+        }
+    }
+
+    dg.add(dx)
+    for (i in 0 until nn + 1) {
+        rg[i].add(rx[i])
+    }
+}
+
+
+private fun inter1(a: Float, b: Float, l1: Float, c: Float): Float { // # the function interpolates between two point
+   /* """ a - value at beginning
+    b - at the end
+    l1 - length between the two points
+    c - distance between a and x
+""" */
+
+    if (l1 < 0) { //  # it is not crazy
+        return a
+    }
+    return if (abs(c) <= l1) {
+        if (a * b >= 0) { //  # the same sign
+            (b - a) / l1 * c + a
+        } else {  // # the values have different sings
+            c / l1 * (b - a) + a
+        }
+    }
+    else if (c > 0) {// # we are right
+        (b - a) / l1 * c + a
+    }
+    else { //  # we are left
+        -(a - b) / l1 * c + b
+    }
 }
 
 
@@ -597,7 +678,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var resultSumPlus: TextView
     lateinit var resultSumMinus: TextView
     lateinit var resultSum: TextView
-    lateinit var checkSprings: CheckBox
+
 
     lateinit var binding: ActivityMainBinding
 
