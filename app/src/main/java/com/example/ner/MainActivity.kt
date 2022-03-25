@@ -31,7 +31,7 @@ var firstNumber: Int = 1
 var lastNumber: Int = 3
 var k_ber: ArrayList<Float> = arrayListOf(1f, 1f, 1f, 1f)
 var xx: ArrayList<Float> = ArrayList()
-lateinit var checkSprings: CheckBox
+var areSpringsUsed: Boolean = false
 
 // coordinate for all cases
 var xg: ArrayList<Float> = ArrayList()
@@ -89,7 +89,7 @@ data class Reaction( // # tables of data for reactions
 
 
 class MyField(
-    var l1: Float,  // lehgth of the field
+    var l1: Float,  // length of the field
     var l0: Float,  // beginning of the field
     var ei1: Float,  //  stiffness of the field
     var numberOfTheField: Int
@@ -356,7 +356,7 @@ private fun makeResultManyFields(x1: Float, n1: Int) {
     val mx: Float
     val qx: Float
     val dx: Float
-    val rx: FloatArray = FloatArray(numberOfFields)
+    val rx: FloatArray = FloatArray(numberOfFields+1)
 
     when (nSec) {
         1 -> {  //# the first field
@@ -415,10 +415,10 @@ private fun makeResultOneField(x1: Float, n1: Int) {
     val n0: Int = if (firstConsoleIsUsed) 0 else 1
     val n2: Int = if (lastConsoleIsUsed) 1 else 0
     val dSec: Float = distanceToSection
-    val mx: Float
-    val qx: Float
-    val dx: Float
-    val rx: Array<Float> = arrayOf(0f, 0f)       // coefficients for bearings
+    var mx: Float = 0f
+    var qx: Float = 0f
+    var dx: Float = 0f
+    val rx: FloatArray = floatArrayOf(0f, 0f)       // coefficients for bearings
 
     if ((n1 == 0) and (nSec == 1)) {
         //# the last is on the console at the beginning
@@ -604,35 +604,39 @@ private fun appendData(x1: Float, n1: Int,
                        mx: Float,
                        qx: Float,
                        dx1: Float,
-                       rx: FloatArray) {
+                       rx: FloatArray ) {
     var dx: Float = dx1
-    xg.add(x1 + f[n1].l01)
+    xg.add(x1 + f[n1].l0)
     mg.add(mx)
     qg.add(qx)
 
-    if (checkSprings.isChecked) { //  # there are springs
-        if (nSec == 0) {
-            // # console at the beginning
-            dx += inter1(
-                k_ber[0] * rx[0],
-                k_ber[1] * rx[1],
-                f[1].l1,
-                -(f[1].l1 + f[0].l1 - dSec)
-            )
-        } else if (nSec == nn + 1) {//   # console at the end
-            dx += inter1(
-                k_ber[nn - 1] * rx[nn - 1],
-                k_ber[nn] * rx[nn],
-                f[nn].l1,
-                f[nn].l1 + dSec
-            )
-        } else { //# general case
-            dx += inter1(
-                k_ber[nSec - 1] * rx[nSec - 1],
-                k_ber[nSec] * rx[nSec],
-                f[nSec].l1,
-                dSec
-            )
+    if (areSpringsUsed) { //  # there are springs
+        when (nSec) {
+            0 -> {
+                // # console at the beginning
+                dx += inter1(
+                    k_ber[0] * rx[0],
+                    k_ber[1] * rx[1],
+                    f[1].l1,
+                    -(f[1].l1 + f[0].l1 - dSec)
+                )
+            }
+            nn + 1 -> {//   # console at the end
+                dx += inter1(
+                    k_ber[nn - 1] * rx[nn - 1],
+                    k_ber[nn] * rx[nn],
+                    f[nn].l1,
+                    f[nn].l1 + dSec
+                )
+            }
+            else -> { //# general case
+                dx += inter1(
+                    k_ber[nSec - 1] * rx[nSec - 1],
+                    k_ber[nSec] * rx[nSec],
+                    f[nSec].l1,
+                    dSec
+                )
+            }
         }
     }
     else {
@@ -678,7 +682,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var resultSumPlus: TextView
     lateinit var resultSumMinus: TextView
     lateinit var resultSum: TextView
-
+    lateinit var checkSprings: CheckBox
 
     lateinit var binding: ActivityMainBinding
 
@@ -1800,14 +1804,21 @@ class MainActivity : AppCompatActivity() {
 
     private fun openAllSprings(){
         if (checkSprings.isChecked) {
+            areSpringsUsed = true
             for (i in 0..numberOfFields) {
                 SpringInput[i].isEnabled = true
                 try {
                     k_ber[i] = 1 / SpringInput[i].text.toString().toFloat()
                 }
+                catch (exception: NumberFormatException) {
+                    SpringInput[i].error = getString(R.string.wrong)
+                    k_ber[i] = 1f
+                    areSpringsUsed = false
+                }
             }
         }
         else {
+            areSpringsUsed = false
             for (i in 0..numberOfFields) {
                 SpringInput[i].isEnabled = false
             }
