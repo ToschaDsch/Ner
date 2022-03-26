@@ -30,7 +30,7 @@ var currentGraph: String = "M"
 var firstNumber: Int = 1
 var lastNumber: Int = 3
 var k_ber: ArrayList<Float> = arrayListOf(1f, 1f, 1f, 1f)
-var xx: ArrayList<Float> = ArrayList()
+var xx: FloatArray = FloatArray()
 var areSpringsUsed: Boolean = false
 
 // coordinate for all cases
@@ -327,11 +327,8 @@ private fun solveIt(x1: Float, n1: Int) {
             stiffnessTensor[i][i + 2] = 1 / f[i + 2].l1 / f[i + 3].l1 * k_ber[i + 2]
             stiffnessTensor[i + 2][i] = stiffnessTensor[i][i + 2]
         }
-        stiffnessTensor = gaussPivotFunc(stiffnessTensor)
+        xx = gaussPivotFunc(stiffnessTensor)
 
-        for (i in 0 until nn - 1) {
-            xx.add(stiffnessTensor[i][nn - 1])
-        }
         makeResultManyFields(x1, n1)
     }
     else {
@@ -340,10 +337,51 @@ private fun solveIt(x1: Float, n1: Int) {
 }
 
 
-private fun gaussPivotFunc(matrix: Array<FloatArray>): Array<FloatArray> {
-    var result: Array<FloatArray>
+private fun gaussPivotFunc(matrix: Array<FloatArray>): FloatArray {
+    /*                  |a11   a12 a13    b1|
+            matrix =    |a21   a22 a23    b2|
+                        |a31   a32 a33    b3|
 
-    return result
+    return      xx =    |x1    x2   x3|
+     */
+    val n: Int = matrix[0].size - 1
+    val xx: FloatArray = FloatArray(n)
+    var tmp: Float = 0f
+
+    //null left at the bottom
+    for (k in 0 until n) {
+        tmp = matrix[k][k]  //check matrix[k][k]
+        if (tmp == 0f) { // degenerate matrix (!!!)
+            return xx
+        }
+        for (i in 0..n) {
+            matrix[k][i] = matrix[k][i] / tmp
+        }
+        for (i in k+1 until n) {
+            tmp = matrix[i][k]/matrix[k][k]
+            for (j in 0 until n+1) {
+                matrix[i][j] -= matrix[k][j]*tmp
+            }
+        }
+    }
+
+    //null right above
+    for (k in n-1 downTo 0) {
+        for (i in n downTo 0) {
+            matrix[k][i] /= matrix[k][k]
+        }
+        for (i in k-1 downTo 0){
+            tmp = matrix[i][k] / matrix[k][k]
+            for (j in n downTo 0) {
+                matrix[i][j] -= matrix[k][j] * tmp
+            }
+        }
+    }
+    // answer
+    for (i in 0 until n) {
+        xx[i] = matrix[i][n]
+    }
+    return xx
 }
 
 
