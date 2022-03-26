@@ -257,7 +257,7 @@
             app:layout_constraintTop_toBottomOf="@+id/imageView" />
 
         <RadioButton
-            android:id="@+id/radioButton3"
+            android:id="@+id/rbD"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="172dp"
@@ -269,7 +269,7 @@
             app:layout_constraintTop_toTopOf="@+id/imageView" />
 
         <RadioButton
-            android:id="@+id/radioButton"
+            android:id="@+id/rbM"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="172dp"
@@ -281,7 +281,7 @@
             app:layout_constraintTop_toTopOf="@+id/imageView" />
 
         <RadioButton
-            android:id="@+id/radioButton2"
+            android:id="@+id/rbQ"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="172dp"

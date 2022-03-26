@@ -253,7 +253,7 @@ private fun solveIt(x1: Float, n1: Int) {
     val nn: Int = numberOfFields
     val stiffnessTensor = Array(nn) {FloatArray(nn)} //stiffness tensor
 
-    for (i in 0..nn) {   //# make dii
+    for (i in 0 until nn-1) {   //# make dii
         stiffnessTensor[i][i] = f[i + 1].l1 / (3 * f[i + 1].ei1) + f[i + 2].l1 / (3 * f[i + 2].ei1) +
             1 / f[i + 1].l1.pow(2) * k_ber[i] + (1 / f[i + 1].l1 + 1 / f[i + 2].l1).pow(2) * k_ber[i + 1] +
             1 / f[i + 2].l1.pow(2) * k_ber[i + 2]
@@ -345,8 +345,8 @@ private fun gaussPivotFunc(matrix: Array<FloatArray>): FloatArray {
     return      xx =    |x1    x2   x3|
      */
     val n: Int = matrix[0].size - 1
-    val xx: FloatArray = FloatArray(n)
-    var tmp: Float = 0f
+    val xx = FloatArray(n)
+    var tmp: Float
 
     //null left at the bottom
     for (k in 0 until n) {
@@ -394,7 +394,7 @@ private fun makeResultManyFields(x1: Float, n1: Int) {
     val mx: Float
     val qx: Float
     val dx: Float
-    val rx = FloatArray(numberOfFields+1)
+    val rx = FloatArray(numberOfFields + 1)
 
     when (nSec) {
         1 -> {  //# the first field
@@ -456,7 +456,7 @@ private fun makeResultOneField(x1: Float, n1: Int) {
     var mx: Float = 0f
     var qx: Float = 0f
     var dx: Float = 0f
-    val rx: FloatArray = floatArrayOf(0f, 0f)       // coefficients for bearings
+    val rx: FloatArray = FloatArray(nn+1)       // coefficients for bearings
 
     if ((n1 == 0) and (nSec == 1)) {
         //# the last is on the console at the beginning
@@ -593,6 +593,7 @@ private fun makeReaction(x1: Float, n1: Int,
                          qx: Float,
                          dx: Float,
                          rx: FloatArray) {
+
     //# reactions
     if (nn > 1) {
         when (n1) {
@@ -623,9 +624,10 @@ private fun makeReaction(x1: Float, n1: Int,
         for (i in 2 until nn) { //  # all intermediate fields, GENERAL CASE
             rx[i - 1] = rx[i - 1] - xx[i - 1] / f[i].l1 + xx[i - 2] / f[i].l1
             rx[i] = rx[i] + xx[i - 1] / f[i].l1 - xx[i - 2] / f[i].l1
-            rx[nn] = rx[nn] - xx[nn - 2] / f[nn].l1  //# last field
-            rx[nn - 1] = rx[nn - 1] + xx[nn - 2] / f[nn].l1
         }
+        rx[nn] = rx[nn] - xx[nn - 2] / f[nn].l1  //# last field
+        rx[nn - 1] = rx[nn - 1] + xx[nn - 2] / f[nn].l1
+
     }
 
 appendData(x1, n1,
@@ -684,7 +686,7 @@ private fun appendData(x1: Float, n1: Int,
     }
 
     dg.add(dx)
-    for (i in 0 until nn + 1) {
+    for (i in 0..nn) {
         rg[i].add(rx[i])
     }
 }
@@ -762,11 +764,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun drawAll() {
         canvasClean()
+        makeNullAllData()
         drawAllFields()
         minField()
 
     }
 
+    private fun makeNullAllData() {
+        xg = ArrayList()
+        mg= ArrayList()
+        qg = ArrayList()
+        dg = ArrayList()
+        rg = ArrayList(numberOfFields + 1, ArrayList<Float>)
+    }
 
     private fun minField() {
         firstNumber = if (firstConsoleIsUsed) 0 else 1
@@ -802,6 +812,8 @@ class MainActivity : AppCompatActivity() {
             f[numberOfFields + 1].drawOneField()
             f[numberOfFields + 1].fragmentationOfOneField()
         }
+
+        drawGraph(currentGraph)
     }
 
 
@@ -1774,12 +1786,19 @@ class MainActivity : AppCompatActivity() {
         }
         CheckBoxDrawCurve[index].isChecked = true
 
-        currentGraph = when (index) {
-            0 -> "M"
-            1 -> "Q"
-            2 -> "d"
+        when (index) {
+            0 -> {currentGraph = "M"
+                drawGraph(currentGraph)
+            }
+            1 -> {currentGraph = "Q"
+                drawGraph(currentGraph)
+            }
+            2 -> {currentGraph = "d"
+                drawGraph(currentGraph)
+            }
             else -> {
-                'R' + (index - 3).toString()
+                currentGraph = 'R' + (index - 3).toString()
+                drawGraph(currentGraph)
             }
         }
     }
