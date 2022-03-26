@@ -30,7 +30,7 @@ var currentGraph: String = "M"
 var firstNumber: Int = 1
 var lastNumber: Int = 3
 var k_ber: ArrayList<Float> = arrayListOf(1f, 1f, 1f, 1f)
-var xx: FloatArray = FloatArray()
+var xx: FloatArray = FloatArray(0)
 var areSpringsUsed: Boolean = false
 
 // coordinate for all cases
@@ -251,7 +251,7 @@ private fun solveIt(x1: Float, n1: Int) {
     //def solve_it(x1, n1):  # solve the system
     //global nn, d_sec, n_sec, n0, xg, mg, qg, dg, spr
     val nn: Int = numberOfFields
-    var stiffnessTensor = Array(nn) {FloatArray(nn)} //stiffness tensor
+    val stiffnessTensor = Array(nn) {FloatArray(nn)} //stiffness tensor
 
     for (i in 0..nn) {   //# make dii
         stiffnessTensor[i][i] = f[i + 1].l1 / (3 * f[i + 1].ei1) + f[i + 2].l1 / (3 * f[i + 2].ei1) +
@@ -355,7 +355,7 @@ private fun gaussPivotFunc(matrix: Array<FloatArray>): FloatArray {
             return xx
         }
         for (i in 0..n) {
-            matrix[k][i] = matrix[k][i] / tmp
+            matrix[k][i] /= tmp
         }
         for (i in k+1 until n) {
             tmp = matrix[i][k]/matrix[k][k]
@@ -394,7 +394,7 @@ private fun makeResultManyFields(x1: Float, n1: Int) {
     val mx: Float
     val qx: Float
     val dx: Float
-    val rx: FloatArray = FloatArray(numberOfFields+1)
+    val rx = FloatArray(numberOfFields+1)
 
     when (nSec) {
         1 -> {  //# the first field
