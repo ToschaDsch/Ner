@@ -29,7 +29,7 @@ var distanceToSection: Float = 2.5f
 var currentGraph: String = "M"
 var firstNumber: Int = 1
 var lastNumber: Int = 3
-var k_ber: ArrayList<Float> = arrayListOf(1f, 1f, 1f, 1f)
+var k_ber: ArrayList<Float> = arrayListOf(0f, 0f, 0f, 0f)
 var xx: FloatArray = FloatArray(0)
 var areSpringsUsed: Boolean = false
 
@@ -201,7 +201,9 @@ class MyField(
 
         if (this.numberOfTheField == numberOfFields + 1) { //# the last point
             solveIt(this.l1, this.numberOfTheField)
-
+        }
+        if ((this.numberOfTheField == numberOfFields) and (!lastConsoleIsUsed)) { //# the last point
+            solveIt(this.l1, this.numberOfTheField)
         }
     }
 }
@@ -209,7 +211,8 @@ class MyField(
 
 private fun drawGraph(theGraphIs: String) {
     val nameOfInfluenceLine = "influence line $theGraphIs"
-    canvas.drawText(nameOfInfluenceLine, 20f, heightOfMyImage - 50f, paintTextMyMessage)
+    val str1: String = nameOfInfluenceLine + "/n" + numberOfFields.toString() + "/n"
+    canvas.drawText(str1,20f,  20f, paintTextMyMessage)
 
     when (theGraphIs) {
         "M" ->  drawTheGraphic(mg)  //draw moment
@@ -771,9 +774,8 @@ class MainActivity : AppCompatActivity() {
     private fun drawAll() {
         makeNullAllData()
         canvasClean()
-        drawAllFields()
         minField()
-
+        drawAllFields()
     }
 
     private fun makeNullAllData() {
@@ -788,8 +790,8 @@ class MainActivity : AppCompatActivity() {
         firstNumber = if (firstConsoleIsUsed) 0 else 1
         lastNumber = if (lastConsoleIsUsed) numberOfFields + 1 else numberOfFields + 0
 
-        shortestField = f[firstNumber + 1].l1
-        for (i in firstNumber + 1..lastNumber) {
+        shortestField = f[firstNumber].l1
+        for (i in firstNumber..lastNumber) {
             if (f[i].l1 < shortestField) {
                 shortestField = f[i].l1
             }
@@ -1063,7 +1065,7 @@ class MainActivity : AppCompatActivity() {
         paintTextMyMessage.color = ContextCompat.getColor(this, R.color.textMessage)
         paintTextMyMessage.strokeWidth = 4F
         paintTextMyMessage.textSize = textSize
-        paintTextMyMessage.textAlign = Paint.Align.CENTER
+        paintTextMyMessage.textAlign = Paint.Align.LEFT
         paintTextMyMessage.style = Paint.Style.FILL
 
         paintOfTheSection = Paint()
@@ -1701,7 +1703,10 @@ class MainActivity : AppCompatActivity() {
             if (checkSprings.isChecked) {
                 SpringInput[numberOfFields].isEnabled = true
                 k_ber.add(SpringInput[numberOfFields].text.toString().toFloat())
+            } else {
+                k_ber.add(1f)
             }
+
             CheckBoxDrawCurve[numberOfFields + 3].isEnabled = true
             ResultAreaPlus[enableNumberOfField].isEnabled = true
             ResultAreaMinus[enableNumberOfField].isEnabled = true
@@ -1879,7 +1884,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 catch (exception: NumberFormatException) {
                     SpringInput[i].error = getString(R.string.wrong)
-                    k_ber[i] = 1f
+                    k_ber[i] = 0f
                     areSpringsUsed = false
                 }
             }
@@ -1888,6 +1893,7 @@ class MainActivity : AppCompatActivity() {
             areSpringsUsed = false
             for (i in 0..numberOfFields) {
                 SpringInput[i].isEnabled = false
+                k_ber[i] = 0f
             }
         }
     }
