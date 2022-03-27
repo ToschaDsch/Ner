@@ -38,7 +38,7 @@ var xg: ArrayList<Float> = ArrayList()
 var mg: ArrayList<Float> = ArrayList()
 var qg: ArrayList<Float> = ArrayList()
 var dg: ArrayList<Float> = ArrayList()
-var rg =  ArrayList<ArrayList<Float>>()
+var rg: MutableList<ArrayList<Float>> = ArrayList()
 
 var f: ArrayList<MyField> = ArrayList()
 
@@ -216,7 +216,8 @@ private fun drawGraph(theGraphIs: String) {
         "Q" ->  drawTheGraphic(qg)  //draw shear
         "d" ->  drawTheGraphic(dg)  //draw deformation
         else -> {val k: Int = theGraphIs.substring(1).toInt()
-            drawTheGraphic(rg[k])   // draw a reaction
+            val matrix = rg[k]
+            drawTheGraphic(matrix)   // draw a reaction
         }
     }
 }
@@ -646,7 +647,11 @@ private fun appendData(x1: Float, n1: Int,
                        dx1: Float,
                        rx: FloatArray ) {
     var dx: Float = dx1
-    xg.add(x1 + f[n1].l0)
+    if (n0 == 0) {
+        xg.add(x1 + f[n1].l0)
+    } else {
+        xg.add(x1 + f[n1].l0 - f[0].l0)
+    }
     mg.add(mx)
     qg.add(qx)
 
@@ -763,19 +768,19 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun drawAll() {
-        canvasClean()
         makeNullAllData()
+        canvasClean()
         drawAllFields()
         minField()
 
     }
 
     private fun makeNullAllData() {
-        xg = ArrayList()
-        mg= ArrayList()
-        qg = ArrayList()
-        dg = ArrayList()
-        rg = ArrayList(numberOfFields + 1, ArrayList<Float>)
+        xg = ArrayList(0)
+        mg= ArrayList(0)
+        qg = ArrayList(0)
+        dg = ArrayList(0)
+        rg = MutableList(numberOfFields + 1) { ArrayList<Float>(0)}
     }
 
     private fun minField() {
@@ -791,7 +796,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun drawAllFields() {
+    fun drawAllFields() {
         var sumLengthOfFields = 0f
         for (i in 1..numberOfFields) {
             sumLengthOfFields += f[i].l1
@@ -1071,7 +1076,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun canvasClean() {
+    fun canvasClean() {
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
     }
 
@@ -1788,16 +1793,24 @@ class MainActivity : AppCompatActivity() {
 
         when (index) {
             0 -> {currentGraph = "M"
+                canvasClean()
+                drawAllFields()
                 drawGraph(currentGraph)
             }
             1 -> {currentGraph = "Q"
+                canvasClean()
+                drawAllFields()
                 drawGraph(currentGraph)
             }
             2 -> {currentGraph = "d"
+                canvasClean()
+                drawAllFields()
                 drawGraph(currentGraph)
             }
             else -> {
                 currentGraph = 'R' + (index - 3).toString()
+                canvasClean()
+                drawAllFields()
                 drawGraph(currentGraph)
             }
         }
