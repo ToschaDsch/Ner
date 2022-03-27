@@ -647,10 +647,10 @@ private fun appendData(x1: Float, n1: Int,
                        dx1: Float,
                        rx: FloatArray ) {
     var dx: Float = dx1
-    if (n0 == 0) {
+    if (firstConsoleIsUsed) {
         xg.add(x1 + f[n1].l0)
     } else {
-        xg.add(x1 + f[n1].l0 - f[0].l0)
+        xg.add(x1 + f[n1].l0 - f[0].l1)
     }
     mg.add(mx)
     qg.add(qx)
