@@ -199,7 +199,7 @@ class MyField(
             solveIt(i, this.numberOfTheField)
         }
 
-        if (this.numberOfTheField == numberOfTheField + 1) { //# the last point
+        if (this.numberOfTheField == numberOfFields + 1) { //# the last point
             solveIt(this.l1, this.numberOfTheField)
 
         }
@@ -230,7 +230,7 @@ private fun drawTheGraphic(listOfOrdinate: ArrayList<Float>) {
         ymin = - ymin
     }
 
-    scaleY = if (ymax!! > ymin) heightOfMyImage/ ymax else heightOfMyImage/ymin
+    scaleY = if (ymax!! > ymin) (0.5*heightOfMyImage/ ymax).toFloat() else (0.5*heightOfMyImage/ymin).toFloat()
     for (i in 1 until xg.size) {
         canvas.drawLine(
             x0OfMyImage + xg[i - 1] / scaleX, y0OfMyImage,
@@ -652,6 +652,7 @@ private fun appendData(x1: Float, n1: Int,
     } else {
         xg.add(x1 + f[n1].l0 - f[0].l1)
     }
+
     mg.add(mx)
     qg.add(qx)
 
@@ -1793,24 +1794,20 @@ class MainActivity : AppCompatActivity() {
 
         when (index) {
             0 -> {currentGraph = "M"
-                canvasClean()
-                drawAllFields()
+                drawAll()
                 drawGraph(currentGraph)
             }
             1 -> {currentGraph = "Q"
-                canvasClean()
-                drawAllFields()
+                drawAll()
                 drawGraph(currentGraph)
             }
             2 -> {currentGraph = "d"
-                canvasClean()
-                drawAllFields()
+                drawAll()
                 drawGraph(currentGraph)
             }
             else -> {
                 currentGraph = 'R' + (index - 3).toString()
-                canvasClean()
-                drawAllFields()
+                drawAll()
                 drawGraph(currentGraph)
             }
         }
