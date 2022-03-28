@@ -93,7 +93,10 @@ class MyField(
     var l1: Float,  // length of the field
     var l0: Float,  // beginning of the field
     var ei1: Float,  //  stiffness of the field
-    var numberOfTheField: Int
+    var numberOfTheField: Int,
+    var tableOfMoment: ArrayList<Float> = arrayListOf(0f, 0f, 0f, 0f),
+    var tableOfShear: ArrayList<Float> = arrayListOf(0f, 0f, 0f, 0f),
+    var tableOfDeflection: ArrayList<Float> = arrayListOf(0f, 0f, 0f, 0f)
 ) {
 
     fun drawOneField() { // it really draws one field
@@ -1937,26 +1940,26 @@ class MainActivity : AppCompatActivity() {
         when (name) {
             "M" -> { //  # set moments
                 for (i in n0..nn + n2) {
-                    ResultAreaPlus[i].text = String.format("%.3f", f[i].tab_m[2])
-                    ResultAreaMinus[i].text = String.format("%.3f", f[i].tab_m[3])
-                    ResultOrdinatePlus[i].text = String.format("%.3f", f[i].tab_m[0])
-                    ResultOrdinateMinus[i].text = String.format("%.3f", f[i].tab_m[1])
+                    ResultAreaPlus[i].text = String.format("%.3f", f[i].tableOfMoment[2])
+                    ResultAreaMinus[i].text = String.format("%.3f", f[i].tableOfMoment[3])
+                    ResultOrdinatePlus[i].text = String.format("%.3f", f[i].tableOfMoment[0])
+                    ResultOrdinateMinus[i].text = String.format("%.3f", f[i].tableOfMoment[1])
                 }
             }
             "Q" -> { //  # set shears
                 for (i in n0..nn + n2) {
-                    ResultAreaPlus[i].text = String.format("%.3f", f[i].tab_q[2])
-                    ResultAreaMinus[i].text = String.format("%.3f", f[i].tab_q[3])
-                    ResultOrdinatePlus[i].text = String.format("%.3f", f[i].tab_q[0])
-                    ResultOrdinateMinus[i].text = String.format("%.3f", f[i].tab_q[1])
+                    ResultAreaPlus[i].text = String.format("%.3f", f[i].tableOfShear[2])
+                    ResultAreaMinus[i].text = String.format("%.3f", f[i].tableOfShear[3])
+                    ResultOrdinatePlus[i].text = String.format("%.3f", f[i].tableOfShear[0])
+                    ResultOrdinateMinus[i].text = String.format("%.3f", f[i].tableOfShear[1])
                 }
             }
             "d" -> { // # set deformations
                 for (i in n0..nn + n2) {
-                    ResultAreaPlus[i].text = String.format("%.3f", f[i].tab_d[2])
-                    ResultAreaMinus[i].text = String.format("%.3f", f[i].tab_d[3])
-                    ResultOrdinatePlus[i].text = String.format("%.3f", f[i].tab_d[0])
-                    ResultOrdinateMinus[i].text = String.format("%.3f", f[i].tab_d[1])
+                    ResultAreaPlus[i].text = String.format("%.3f", f[i].tableOfDeflection[2])
+                    ResultAreaMinus[i].text = String.format("%.3f", f[i].tableOfDeflection[3])
+                    ResultOrdinatePlus[i].text = String.format("%.3f", f[i].tableOfDeflection[0])
+                    ResultOrdinateMinus[i].text = String.format("%.3f", f[i].tableOfDeflection[1])
                 }
             }
             else -> { //  # R
@@ -1974,7 +1977,7 @@ class MainActivity : AppCompatActivity() {
     private fun table(initialNumber: Int, newNumber: Int) : Int { //  # Make tables for all the cases (M, Q, d, Ri)
         // the function solves the data for the tables
         //global xg, mg, qg, rg, rea, n0
-        var i: Int = initialNumber
+        val i: Int = initialNumber
         var ii: Int = newNumber
         var maxM: Float = mg[ii]
         var minM: Float  = mg[ii]
@@ -1996,6 +1999,8 @@ class MainActivity : AppCompatActivity() {
         val arP: ArrayList<Float> = ArrayList()
         val arM: ArrayList<Float> = ArrayList()
 
+        var ai: Float
+
         for (i2 in 0..numberOfFields) {
             maxR.add(rg[i2][ii])
             minR.add(rg[i2][ii])
@@ -2013,12 +2018,12 @@ class MainActivity : AppCompatActivity() {
             if (mg[ii] < minM) {
                 minM = mg[ii]
             }
-            var ai: Float = .5 * (xg[ii] - xg[ii - 1]) * (mg[ii] + mg[ii - 1])
+            ai = (.5 * (xg[ii] - xg[ii - 1]) * (mg[ii] + mg[ii - 1])).toFloat()
             if (ai > 0f) {
-                amP = amP + ai
+                amP += ai
             }
             else {
-                amM = amM + ai
+                amM += ai
             }
             //# shear
             if (qg[ii] > maxQ) {
@@ -2027,12 +2032,12 @@ class MainActivity : AppCompatActivity() {
             if (qg[ii] < minQ) {
                 minQ = qg[ii]
             }
-            ai = .5 * (xg[ii] - xg[ii - 1]) * (qg[ii] + qg[ii - 1])
+            ai = (.5 * (xg[ii] - xg[ii - 1]) * (qg[ii] + qg[ii - 1])).toFloat()
             if (ai > 0f) {
-                aqP = aqP + ai
+                aqP += ai
             }
             else {
-                aqM = aqM + ai
+                aqM += ai
             }
             //# deformations
             if (dg[ii] > maxD) {
@@ -2041,46 +2046,46 @@ class MainActivity : AppCompatActivity() {
             if (dg[ii] < minD) {
                 minD = dg[ii]
             }
-            ai = .5 * (xg[ii] - xg[ii - 1]) * (dg[ii] + dg[ii - 1])
+            ai = (.5 * (xg[ii] - xg[ii - 1]) * (dg[ii] + dg[ii - 1])).toFloat()
             if (ai > 0f) {
-                adP = adP + ai
+                adP += ai
             }
             else {
-                adM = adM + ai
+                adM += ai
             }
-            for (i2 in 0..nn) { //   # all reactions
+            for (i2 in 0..numberOfFields) { //   # all reactions
                 if (rg[i2][ii] > maxR[i2]) {
                     maxR[i2] = rg[i2][ii]
                 }
                 if (rg[i2][ii] < minR[i2]) {
                     minR[i2] = rg[i2][ii]
                 }
-                ai = .5 * (xg[ii] - xg[ii - 1]) * (rg[i2][ii] + rg[i2][ii - 1])
+                ai = (.5 * (xg[ii] - xg[ii - 1]) * (rg[i2][ii] + rg[i2][ii - 1])).toFloat()
                 if (ai > 0) {
-                    arP[i2] = arP[i2] + ai
+                    arP[i2] += ai
                 }
                 else {
-                    arM[i2] = arM[i2] + ai
+                    arM[i2] += ai
                 }
             }
         }
-        //# table     ymax, ymin, a+, a-
-        f[i].tab_m = [maxM, minM, amP, amM]
-        f[i].tab_q = [maxQ, minQ, aqP, aqM]
-        f[i].tab_d = [maxD, minD, adP, adM]
-        if ((firstConsoleIsUsed == false) and (i == 1)) {
-            for (i2 in 0..nn) {
-                rea[i2].tab_yp.add(0)
-                rea[i2].tab_ym.add(0)
-                rea[i2].tab_ap.add(0)
-                rea[i2].tab_am.add(0)
+        //# table                ymax, ymin, a+,   a-
+        f[i].tableOfMoment = arrayListOf(maxM, minM, amP, amM)
+        f[i].tableOfShear = arrayListOf(maxQ, minQ, aqP, aqM)
+        f[i].tableOfDeflection = arrayListOf(maxD, minD, adP, adM)
+        if ((!firstConsoleIsUsed) and (i == 1)) {
+            for (i2 in 0..numberOfFields) {
+                rea[i2].tableOrdinatePlus.add(0)
+                rea[i2].tableOrdinateMinus.add(0)
+                rea[i2].tableAreaPlus.add(0)
+                rea[i2].tableAreaMinus.add(0)
             }
         }
-        for (i2 in 0..nn) { //# all reactions
-            rea[i2].tab_yp.add(maxR[i2])
-            rea[i2].tab_ym.add(minR[i2])
-            rea[i2].tab_ap.add(arP[i2])
-            rea[i2].tab_am.add(arM[i2])
+        for (i2 in 0..numberOfFields) { //# all reactions
+            rea[i2].tableOrdinatePlus.add(maxR[i2])
+            rea[i2].tableOrdinateMinus.add(minR[i2])
+            rea[i2].tableAreaPlus.add(arP[i2])
+            rea[i2].tableAreaMinus.add(arM[i2])
         }
         return ii
     }
