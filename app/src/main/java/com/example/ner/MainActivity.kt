@@ -1972,10 +1972,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun table(initialNumber: Int, newNumber: Int) : Int { //  # Make tables for all the cases (M, Q, d, Ri)
-
+        // the function solves the data for the tables
         //global xg, mg, qg, rg, rea, n0
-        var: Int i = initialNumber
-        var ii = newNumber
+        var i: Int = initialNumber
+        var ii: Int = newNumber
         var maxM: Float = mg[ii]
         var minM: Float  = mg[ii]
         var amP: Float  = 0f
@@ -2007,63 +2007,81 @@ class MainActivity : AppCompatActivity() {
             ii += 1
 
             //# moments
-            if mg[ii] > maxM:
-            maxM = mg[ii]
-            if mg[ii] < minM:
-            minM = mg[ii]
-            ai = .5 * (xg[ii] - xg[ii - 1]) * (mg[ii] + mg[ii - 1])
-            if ai > 0:
-            amP = amP + ai
-            else:
-            amM = amM + ai
-            # shear
-            if qg[ii] > maxQ:
-            maxQ = qg[ii]
-            if qg[ii] < minQ:
-            minQ = qg[ii]
+            if (mg[ii] > maxM) {
+                maxM = mg[ii]
+            }
+            if (mg[ii] < minM) {
+                minM = mg[ii]
+            }
+            var ai: Float = .5 * (xg[ii] - xg[ii - 1]) * (mg[ii] + mg[ii - 1])
+            if (ai > 0f) {
+                amP = amP + ai
+            }
+            else {
+                amM = amM + ai
+            }
+            //# shear
+            if (qg[ii] > maxQ) {
+                maxQ = qg[ii]
+            }
+            if (qg[ii] < minQ) {
+                minQ = qg[ii]
+            }
             ai = .5 * (xg[ii] - xg[ii - 1]) * (qg[ii] + qg[ii - 1])
-            if ai > 0:
-            aqP = aqP + ai
-            else:
-            aqM = aqM + ai
-            # deformations
-            if dg[ii] > maxD:
-            maxD = dg[ii]
-            if dg[ii] < minD:
-            minD = dg[ii]
+            if (ai > 0f) {
+                aqP = aqP + ai
+            }
+            else {
+                aqM = aqM + ai
+            }
+            //# deformations
+            if (dg[ii] > maxD) {
+                maxD = dg[ii]
+            }
+            if (dg[ii] < minD) {
+                minD = dg[ii]
+            }
             ai = .5 * (xg[ii] - xg[ii - 1]) * (dg[ii] + dg[ii - 1])
-            if ai > 0:
-            adP = adP + ai
-            else:
-            adM = adM + ai
-
-            for i2 in range(nn + 1):  # all reactions
-            if rg[i2][ii] > maxR[i2]:
-            maxR[i2] = rg[i2][ii]
-            if rg[i2][ii] < minR[i2]:
-            minR[i2] = rg[i2][ii]
-            ai = .5 * (xg[ii] - xg[ii - 1]) * (rg[i2][ii] + rg[i2][ii - 1])
-            if ai > 0:
-            arP[i2] = arP[i2] + ai
-            else:
-            arM[i2] = arM[i2] + ai
+            if (ai > 0f) {
+                adP = adP + ai
+            }
+            else {
+                adM = adM + ai
+            }
+            for (i2 in 0..nn) { //   # all reactions
+                if (rg[i2][ii] > maxR[i2]) {
+                    maxR[i2] = rg[i2][ii]
+                }
+                if (rg[i2][ii] < minR[i2]) {
+                    minR[i2] = rg[i2][ii]
+                }
+                ai = .5 * (xg[ii] - xg[ii - 1]) * (rg[i2][ii] + rg[i2][ii - 1])
+                if (ai > 0) {
+                    arP[i2] = arP[i2] + ai
+                }
+                else {
+                    arM[i2] = arM[i2] + ai
+                }
+            }
         }
-        # table ymax, ymin, a+, a-
+        //# table     ymax, ymin, a+, a-
         f[i].tab_m = [maxM, minM, amP, amM]
         f[i].tab_q = [maxQ, minQ, aqP, aqM]
         f[i].tab_d = [maxD, minD, adP, adM]
-        if n0 == 1 and i == 1:
-        for i2 in range(nn + 1):
-        rea[i2].tab_yp.append(0)
-        rea[i2].tab_ym.append(0)
-        rea[i2].tab_ap.append(0)
-        rea[i2].tab_am.append(0)
-        for i2 in range(nn + 1):  # all reactions
-        rea[i2].tab_yp.append(maxR[i2])
-        rea[i2].tab_ym.append(minR[i2])
-        rea[i2].tab_ap.append(arP[i2])
-        rea[i2].tab_am.append(arM[i2])
-
+        if ((firstConsoleIsUsed == false) and (i == 1)) {
+            for (i2 in 0..nn) {
+                rea[i2].tab_yp.add(0)
+                rea[i2].tab_ym.add(0)
+                rea[i2].tab_ap.add(0)
+                rea[i2].tab_am.add(0)
+            }
+        }
+        for (i2 in 0..nn) { //# all reactions
+            rea[i2].tab_yp.add(maxR[i2])
+            rea[i2].tab_ym.add(minR[i2])
+            rea[i2].tab_ap.add(arP[i2])
+            rea[i2].tab_am.add(arM[i2])
+        }
         return ii
     }
 }
