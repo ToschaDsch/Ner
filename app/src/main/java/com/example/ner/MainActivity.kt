@@ -2075,10 +2075,10 @@ class MainActivity : AppCompatActivity() {
         f[i].tableOfDeflection = arrayListOf(maxD, minD, adP, adM)
         if ((!firstConsoleIsUsed) and (i == 1)) {
             for (i2 in 0..numberOfFields) {
-                rea[i2].tableOrdinatePlus.add(0)
-                rea[i2].tableOrdinateMinus.add(0)
-                rea[i2].tableAreaPlus.add(0)
-                rea[i2].tableAreaMinus.add(0)
+                rea[i2].tableOrdinatePlus.add(0f)
+                rea[i2].tableOrdinateMinus.add(0f)
+                rea[i2].tableAreaPlus.add(0f)
+                rea[i2].tableAreaMinus.add(0f)
             }
         }
         for (i2 in 0..numberOfFields) { //# all reactions
