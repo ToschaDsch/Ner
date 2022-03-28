@@ -798,6 +798,7 @@ class MainActivity : AppCompatActivity() {
         for (i in n0 + 1..numberOfFields + n2) {
             ii1 = table(i, ii1)
         }
+        setTable(currentGraph)
     }
 
     private fun makeNullAllData() {
@@ -2021,7 +2022,7 @@ class MainActivity : AppCompatActivity() {
             arM.add(0f)
         }
 
-        while (xg[ii] < f[i].l0 + f[i].l1) {
+        while ((xg[ii] <= f[i].l0 + f[i].l1) and (ii < xg.size-1)){
             ii += 1
 
             //# moments
