@@ -41,6 +41,7 @@ var dg: ArrayList<Float> = ArrayList()
 var rg: MutableList<ArrayList<Float>> = ArrayList()
 
 var f: ArrayList<MyField> = ArrayList()
+var rea: ArrayList<Reaction> = ArrayList()
 
 var widthOfApp: Int = 0
 var heightOfApp: Int = 0
@@ -488,6 +489,7 @@ private fun makeResultOneField(x1: Float, n1: Int) {
         else if (nSec == nn +1) { //  # the section is on the last field
             if (n1 == 1) { // # last is on an intermediate field
                 dx = (f[1].l1 + x1) * x1 * (f[1].l1 - x1) * dSec / (6 * f[1].l1 * f[1].ei1)
+
             }
             else { // # last is on the first field
                 dx = -dSec * (f[0].l1 - x1) * f[1].l1 / (6 * f[1].ei1)
@@ -496,6 +498,10 @@ private fun makeResultOneField(x1: Float, n1: Int) {
                 rx[1] = -(x1 / f[1].l1)
                 rx[0] = -(1 - x1 / f[1].l1)
             }
+        }
+        else { // intermediate field
+            rx[1] = -(x1 / f[1].l1)
+            rx[0] = -(1 - x1 / f[1].l1)
         }
     }
     makeM0(x1, n1, nn, nSec, n0, n2, dSec, mx, qx, dx, rx)
@@ -780,10 +786,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun makeNullAllData() {
         xg = ArrayList(0)
-        mg= ArrayList(0)
+        mg = ArrayList(0)
         qg = ArrayList(0)
         dg = ArrayList(0)
-        rg = MutableList(numberOfFields + 1) { ArrayList<Float>(0)}
+        rg = MutableList(numberOfFields + 1) { ArrayList<Float>(0) }
+        rea = ArrayList(0)
+        for (i in 0..numberOfFields) {
+            rea.add(Reaction())
+        }
     }
 
     private fun minField() {
@@ -1798,15 +1808,18 @@ class MainActivity : AppCompatActivity() {
         CheckBoxDrawCurve[index].isChecked = true
 
         when (index) {
-            0 -> {currentGraph = "M"
+            0 -> {
+                currentGraph = "M"
                 drawAll()
                 drawGraph(currentGraph)
             }
-            1 -> {currentGraph = "Q"
+            1 -> {
+                currentGraph = "Q"
                 drawAll()
                 drawGraph(currentGraph)
             }
-            2 -> {currentGraph = "d"
+            2 -> {
+                currentGraph = "d"
                 drawAll()
                 drawGraph(currentGraph)
             }
@@ -1874,22 +1887,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun openAllSprings(){
+    private fun openAllSprings() {
         if (checkSprings.isChecked) {
             areSpringsUsed = true
             for (i in 0..numberOfFields) {
                 SpringInput[i].isEnabled = true
                 try {
                     k_ber[i] = 1 / SpringInput[i].text.toString().toFloat()
-                }
-                catch (exception: NumberFormatException) {
+                } catch (exception: NumberFormatException) {
                     SpringInput[i].error = getString(R.string.wrong)
                     k_ber[i] = 0f
                     areSpringsUsed = false
                 }
             }
-        }
-        else {
+        } else {
             areSpringsUsed = false
             for (i in 0..numberOfFields) {
                 SpringInput[i].isEnabled = false
@@ -1899,12 +1910,160 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    fun String.toSpanned() : Spanned {      // make style from HTML
+    fun String.toSpanned(): Spanned {      // make style from HTML
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             return Html.fromHtml(this, Html.FROM_HTML_MODE_LEGACY)
         } else {
             @Suppress("DEPRECATION")
             return Html.fromHtml(this)
         }
+    }
+
+
+    private fun clearTable() {
+        for (i in 0..11) {
+            ResultAreaPlus[i].text = "0"
+            ResultAreaMinus[i].text = "0"
+            ResultOrdinatePlus[i].text = "0"
+            ResultOrdinateMinus[i].text = "0"
+        }
+    }
+
+
+    private fun setTable(name: String) { //  # show dates on tables
+        val nn: Int = numberOfFields
+        val n0: Int = if (firstConsoleIsUsed) 0 else 1
+        val n2: Int = if (lastConsoleIsUsed) 1 else 0
+        when (name) {
+            "M" -> { //  # set moments
+                for (i in n0..nn + n2) {
+                    ResultAreaPlus[i].text = String.format("%.3f", f[i].tab_m[2])
+                    ResultAreaMinus[i].text = String.format("%.3f", f[i].tab_m[3])
+                    ResultOrdinatePlus[i].text = String.format("%.3f", f[i].tab_m[0])
+                    ResultOrdinateMinus[i].text = String.format("%.3f", f[i].tab_m[1])
+                }
+            }
+            "Q" -> { //  # set shears
+                for (i in n0..nn + n2) {
+                    ResultAreaPlus[i].text = String.format("%.3f", f[i].tab_q[2])
+                    ResultAreaMinus[i].text = String.format("%.3f", f[i].tab_q[3])
+                    ResultOrdinatePlus[i].text = String.format("%.3f", f[i].tab_q[0])
+                    ResultOrdinateMinus[i].text = String.format("%.3f", f[i].tab_q[1])
+                }
+            }
+            "d" -> { // # set deformations
+                for (i in n0..nn + n2) {
+                    ResultAreaPlus[i].text = String.format("%.3f", f[i].tab_d[2])
+                    ResultAreaMinus[i].text = String.format("%.3f", f[i].tab_d[3])
+                    ResultOrdinatePlus[i].text = String.format("%.3f", f[i].tab_d[0])
+                    ResultOrdinateMinus[i].text = String.format("%.3f", f[i].tab_d[1])
+                }
+            }
+            else -> { //  # R
+                val k: Int = name.substring(1).toInt()
+                for (i in n0..nn + n2) {
+                    ResultAreaPlus[i].text = String.format("%.3f", rea[k].tableAreaPlus[i])
+                    ResultAreaMinus[i].text = String.format("%.3f", rea[k].tableAreaMinus[i])
+                    ResultOrdinatePlus[i].text = String.format("%.3f", rea[k].tableOrdinatePlus[i])
+                    ResultOrdinateMinus[i].text = String.format("%.3f", rea[k].tableOrdinateMinus[i])
+                }
+            }
+        }
+    }
+
+    private fun table(initialNumber: Int, newNumber: Int) : Int { //  # Make tables for all the cases (M, Q, d, Ri)
+
+        //global xg, mg, qg, rg, rea, n0
+        var: Int i = initialNumber
+        var ii = newNumber
+        var maxM: Float = mg[ii]
+        var minM: Float  = mg[ii]
+        var amP: Float  = 0f
+        var amM: Float  = 0f
+
+        var maxQ: Float = qg[ii]
+        var minQ: Float = qg[ii]
+        var aqP: Float = 0f
+        var aqM: Float = 0f
+
+        var maxD: Float = dg[ii]
+        var minD: Float = dg[ii]
+        var adP: Float = 0f
+        var adM: Float = 0f
+
+        val maxR: ArrayList<Float> = ArrayList()
+        val minR: ArrayList<Float> = ArrayList()
+        val arP: ArrayList<Float> = ArrayList()
+        val arM: ArrayList<Float> = ArrayList()
+
+        for (i2 in 0..numberOfFields) {
+            maxR.add(rg[i2][ii])
+            minR.add(rg[i2][ii])
+            arP.add(0f)
+            arM.add(0f)
+        }
+
+        while (xg[ii] < f[i].l0 + f[i].l1) {
+            ii += 1
+
+            //# moments
+            if mg[ii] > maxM:
+            maxM = mg[ii]
+            if mg[ii] < minM:
+            minM = mg[ii]
+            ai = .5 * (xg[ii] - xg[ii - 1]) * (mg[ii] + mg[ii - 1])
+            if ai > 0:
+            amP = amP + ai
+            else:
+            amM = amM + ai
+            # shear
+            if qg[ii] > maxQ:
+            maxQ = qg[ii]
+            if qg[ii] < minQ:
+            minQ = qg[ii]
+            ai = .5 * (xg[ii] - xg[ii - 1]) * (qg[ii] + qg[ii - 1])
+            if ai > 0:
+            aqP = aqP + ai
+            else:
+            aqM = aqM + ai
+            # deformations
+            if dg[ii] > maxD:
+            maxD = dg[ii]
+            if dg[ii] < minD:
+            minD = dg[ii]
+            ai = .5 * (xg[ii] - xg[ii - 1]) * (dg[ii] + dg[ii - 1])
+            if ai > 0:
+            adP = adP + ai
+            else:
+            adM = adM + ai
+
+            for i2 in range(nn + 1):  # all reactions
+            if rg[i2][ii] > maxR[i2]:
+            maxR[i2] = rg[i2][ii]
+            if rg[i2][ii] < minR[i2]:
+            minR[i2] = rg[i2][ii]
+            ai = .5 * (xg[ii] - xg[ii - 1]) * (rg[i2][ii] + rg[i2][ii - 1])
+            if ai > 0:
+            arP[i2] = arP[i2] + ai
+            else:
+            arM[i2] = arM[i2] + ai
+        }
+        # table ymax, ymin, a+, a-
+        f[i].tab_m = [maxM, minM, amP, amM]
+        f[i].tab_q = [maxQ, minQ, aqP, aqM]
+        f[i].tab_d = [maxD, minD, adP, adM]
+        if n0 == 1 and i == 1:
+        for i2 in range(nn + 1):
+        rea[i2].tab_yp.append(0)
+        rea[i2].tab_ym.append(0)
+        rea[i2].tab_ap.append(0)
+        rea[i2].tab_am.append(0)
+        for i2 in range(nn + 1):  # all reactions
+        rea[i2].tab_yp.append(maxR[i2])
+        rea[i2].tab_ym.append(minR[i2])
+        rea[i2].tab_ap.append(arP[i2])
+        rea[i2].tab_am.append(arM[i2])
+
+        return ii
     }
 }
