@@ -785,6 +785,19 @@ class MainActivity : AppCompatActivity() {
         canvasClean()
         minField()
         drawAllFields()
+        makeAllTables()
+    }
+
+
+    private fun makeAllTables() {
+        clearTable()
+        var ii1: Int = 0  //# make the tables
+        val n0: Int = if (firstConsoleIsUsed) 0 else 1
+        val n2: Int = if (lastConsoleIsUsed) 1 else 0
+        ii1 = table(n0, ii1)
+        for (i in n0 + 1..numberOfFields + n2) {
+            ii1 = table(i, ii1)
+        }
     }
 
     private fun makeNullAllData() {
@@ -2069,7 +2082,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        //# table                ymax, ymin, a+,   a-
+        //# table                       ymax, ymin, a+,   a-
         f[i].tableOfMoment = arrayListOf(maxM, minM, amP, amM)
         f[i].tableOfShear = arrayListOf(maxQ, minQ, aqP, aqM)
         f[i].tableOfDeflection = arrayListOf(maxD, minD, adP, adM)
