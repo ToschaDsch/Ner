@@ -259,17 +259,13 @@ private fun solveIt(x1: Float, n1: Int) {
     //def solve_it(x1, n1):  # solve the system
     //global nn, d_sec, n_sec, n0, xg, mg, qg, dg, spr
     val nn: Int = numberOfFields
-    val stiffnessTensor = Array(nn) {FloatArray(nn)} //stiffness tensor
+    val stiffnessTensor = Array(nn-1) {FloatArray(nn)} //stiffness tensor
 
     for (i in 0 until nn-1) {   //# make dii
-        stiffnessTensor[i][i] = f[i + 1].l1 / (3 * f[i + 1].ei1) + f[i + 2].l1 / (3 * f[i + 2].ei1) +
-            1 / f[i + 1].l1.pow(2) * k_ber[i] + (1 / f[i + 1].l1 + 1 / f[i + 2].l1).pow(2) * k_ber[i + 1] +
-            1 / f[i + 2].l1.pow(2) * k_ber[i + 2]
+        stiffnessTensor[i][i] = f[i + 1].l1 / (3 * f[i + 1].ei1) + f[i + 2].l1 / (3 * f[i + 2].ei1) + 1 / f[i + 1].l1.pow(2) * k_ber[i] + (1 / f[i + 1].l1 + 1 / f[i + 2].l1).pow(2) * k_ber[i + 1] + 1 / f[i + 2].l1.pow(2) * k_ber[i + 2]
 
         if ((i == 0) and (n1 == 1)) {// the first field
-            stiffnessTensor[0][nn - 1] = -(f[1].l1 - x1) * x1 * (f[1].l1 + x1) / (6 * f[1].ei1 * f[1].l1) -
-                    (1 - x1 / f[1].l1) / f[1].l1 * k_ber[0] +
-                    (1 / f[1].l1 + 1 / f[2].l1) * x1 / f[1].l1 * k_ber[1]
+            stiffnessTensor[0][nn - 1] = -(f[1].l1 - x1) * x1 * (f[1].l1 + x1) / (6 * f[1].ei1 * f[1].l1) - (1 - x1 / f[1].l1) / f[1].l1 * k_ber[0] + (1 / f[1].l1 + 1 / f[2].l1) * x1 / f[1].l1 * k_ber[1]
             if (nn > 2) {
                 stiffnessTensor[1][nn - 1] = -1 / f[2].l1 * x1 / f[1].l1 * k_ber[1]
             }
@@ -277,45 +273,33 @@ private fun solveIt(x1: Float, n1: Int) {
         else if ((n1 == nn) and (i == nn - 2)) {
             //# the last field
             stiffnessTensor[nn - 2][nn - 1] =
-                -(2 * f[nn].l1 - x1) * x1 * (f[nn].l1 - x1) / (6 * f[nn].ei1 * f[nn].l1)
-            -(x1 / f[nn].l1) / f[nn].l1 * k_ber[nn]
-            +(1 - x1 / f[nn].l1) * (1 / f[nn].l1 + 1 / f[nn - 1].l1) * k_ber[nn - 1]
+                -(2 * f[nn].l1 - x1) * x1 * (f[nn].l1 - x1) / (6 * f[nn].ei1 * f[nn].l1)-(x1 / f[nn].l1) / f[nn].l1 * k_ber[nn]+(1 - x1 / f[nn].l1) * (1 / f[nn].l1 + 1 / f[nn - 1].l1) * k_ber[nn - 1]
             if (nn > 2) {
                 stiffnessTensor[nn - 3][nn - 1] = -1 / f[nn - 1].l1 * k_ber[nn - 1] * (1 - x1 / f[nn].l1)
             }
         }
         else if ((n1 == 0) and (i == 0)) {
             //# there is a console at the beginning
-            stiffnessTensor[0][nn - 1] = (f[0].l1 - x1) * f[1].l1 / (6 * f[1].ei1)
-            -(f[0].l1 - x1 + f[1].l1) / f[1].l1 / f[1].l1 * k_ber[0]
-            -(1 / f[1].l1 + 1 / f[2].l1) * (f[0].l1 - x1) / f[1].l1 * k_ber[1]
+            stiffnessTensor[0][nn - 1] = (f[0].l1 - x1) * f[1].l1 / (6 * f[1].ei1)-(f[0].l1 - x1 + f[1].l1) / f[1].l1 / f[1].l1 * k_ber[0]-(1 / f[1].l1 + 1 / f[2].l1) * (f[0].l1 - x1) / f[1].l1 * k_ber[1]
             if (nn > 2) {
                 stiffnessTensor[1][nn - 1] = (f[0].l1 - x1) / f[1].l1 * k_ber[1] / f[2].l1
             }
         }
         else if (n1 == nn + 1) { //  # there is a console at the end
-            stiffnessTensor[nn - 2][nn - 1] = x1 * f[nn].l1 / (6 * f[nn].ei1)
-            -(x1 + f[nn].l1) / f[nn].l1 / f[nn].l1 * k_ber[nn]
-            -(x1 / f[nn].l1) * (1 / f[nn].l1 + 1 / f[nn - 1].l1) * k_ber[nn - 1]
+            stiffnessTensor[nn - 2][nn - 1] = x1 * f[nn].l1 / (6 * f[nn].ei1)-(x1 + f[nn].l1) / f[nn].l1 / f[nn].l1 * k_ber[nn]-(x1 / f[nn].l1) * (1 / f[nn].l1 + 1 / f[nn - 1].l1) * k_ber[nn - 1]
             if (nn > 2) {
                 stiffnessTensor[nn - 3][nn - 1] = x1 / f[nn].l1 / f[nn - 1].l1 * k_ber[nn - 1]
             }
         }
         else { //  # GENERAL CASE
             if (i == n1 - 2) {//  # xi is left
-                stiffnessTensor[i][nn - 1] =
-                    -(2 * f[n1].l1 - x1) * x1 * (f[n1].l1 - x1) / (6 * f[n1].ei1 * f[n1].l1)
-                +(1 - x1 / f[n1].l1) * (1 / f[n1].l1 + 1 / f[n1 - 1].l1) * k_ber[n1 - 1]
-                -x1 / f[n1].l1 / f[n1].l1 * k_ber[n1]
+                stiffnessTensor[i][nn - 1] = -(2 * f[n1].l1 - x1) * x1 * (f[n1].l1 - x1) / (6 * f[n1].ei1 * f[n1].l1)+(1 - x1 / f[n1].l1) * (1 / f[n1].l1 + 1 / f[n1 - 1].l1) * k_ber[n1 - 1]-x1 / f[n1].l1 / f[n1].l1 * k_ber[n1]
                 if ((nn - 1 > n1) and (n1 > 1)) {
                     stiffnessTensor[i + 2][nn - 1] = -x1 / f[n1].l1 * k_ber[n1] / f[n1 + 1].l1
                 }
             }
             else if (i == n1 - 1) { //  # xi is right
-                stiffnessTensor[i][nn - 1] =
-                    -(f[n1].l1 + x1) * x1 * (f[n1].l1 - x1) / (6 * f[n1].ei1 * f[n1].l1)
-                -(1 - x1 / f[n1].l1) / f[n1].l1 * k_ber[n1 - 1]
-                +x1 / f[n1].l1 * (1 / f[n1].l1 + 1 / f[n1 + 1].l1) * k_ber[n1]
+                stiffnessTensor[i][nn - 1] = -(f[n1].l1 + x1) * x1 * (f[n1].l1 - x1) / (6 * f[n1].ei1 * f[n1].l1)-(1 - x1 / f[n1].l1) / f[n1].l1 * k_ber[n1 - 1]+x1 / f[n1].l1 * (1 / f[n1].l1 + 1 / f[n1 + 1].l1) * k_ber[n1]
 
                 if ((2 < n1) and (n1 < nn)) {
                      stiffnessTensor[i - 2][nn - 1] = -(1 - x1 / f[n1].l1) * k_ber[n1 - 1] / f[n1 - 1].l1
@@ -326,9 +310,7 @@ private fun solveIt(x1: Float, n1: Int) {
     if (nn != 1) {
         //# you need xi, 2 and more fields
         for (i in 0 until nn - 2) { //# make d21, d21 et cetera
-            stiffnessTensor[i][i + 1] = f[i + 2].l1 / (6 * f[i + 2].ei1)
-            -(1 / f[i + 1].l1 + 1 / f[i + 2].l1) / f[i + 2].l1 * k_ber[i + 1]
-            -(1 / f[i + 2].l1 + 1 / f[i + 3].l1) / f[i + 3].l1 * k_ber[i + 2]
+            stiffnessTensor[i][i + 1] = f[i + 2].l1 / (6 * f[i + 2].ei1)-(1 / f[i + 1].l1 + 1 / f[i + 2].l1) / f[i + 2].l1 * k_ber[i + 1]-(1 / f[i + 2].l1 + 1 / f[i + 3].l1) / f[i + 3].l1 * k_ber[i + 2]
             stiffnessTensor[i + 1][i] = stiffnessTensor[i][i + 1]
         }
         for (i in 0 until nn - 3) {  //# d13, 31 et cetera
@@ -409,8 +391,7 @@ private fun makeResultManyFields(x1: Float, n1: Int) {
             if ((n0 == 0) and (n1 == 0)) { //# there is a console at the beginning
                 mx = -dSec / f[1].l1 * xx[0] + (f[0].l1 - x1) * (f[1].l1 - dSec) / f[1].l1
                 qx = -(xx[0] / f[1].l1 + (f[0].l1 - x1) / f[1].l1)
-                dx = -(f[1].l1 - dSec) * dSec * (f[1].l1 + dSec) / (6 * f[1].ei1 * f[1].l1) * xx[0]
-                +(2 * f[1].l1 - dSec) * dSec * (f[1].l1 - dSec) / (6 * f[1].ei1 * f[1].l1) * (f[0].l1 - x1)
+                dx = -(f[1].l1 - dSec) * dSec * (f[1].l1 + dSec) / (6 * f[1].ei1 * f[1].l1) * xx[0] + (2 * f[1].l1 - dSec) * dSec * (f[1].l1 - dSec) / (6 * f[1].ei1 * f[1].l1) * (f[0].l1 - x1)
             } else {
                 //# there is no console
                 mx = -dSec / f[1].l1 * xx[0]  //#+M
@@ -422,15 +403,12 @@ private fun makeResultManyFields(x1: Float, n1: Int) {
             if ((n2 == 1) and (n1 == nn + 1)) { //# there is a console at the end
                 mx = -((f[nn].l1 - dSec) / f[nn].l1 * xx[nn - 2] - x1 * dSec / f[nn].l1)
                 qx = (xx[nn - 2] / f[nn].l1 + x1 / f[nn].l1)
-                dx =
-                    -(2 * f[nn].l1 - dSec) * dSec * (f[nn].l1 - dSec) / (6 * f[nn].ei1 * f[nn].l1) * xx[nn - 2]
-                +(f[nn].l1 - dSec) * dSec * (f[nn].l1 + dSec) / (6 * f[nn].ei1 * f[nn].l1) * x1
+                dx = -(2 * f[nn].l1 - dSec) * dSec * (f[nn].l1 - dSec) / (6 * f[nn].ei1 * f[nn].l1) * xx[nn - 2]+(f[nn].l1 - dSec) * dSec * (f[nn].l1 + dSec) / (6 * f[nn].ei1 * f[nn].l1) * x1
             } else {
                 //# there is no console at the end
                 mx = -((f[nn].l1 - dSec) / f[nn].l1 * xx[nn - 2]) // #+M
                 qx = (xx[nn - 2] / f[nn].l1)
-                dx =
-                    -(2 * f[nn].l1 - dSec) * dSec * (f[nn].l1 - dSec) / (6 * f[nn].ei1 * f[nn].l1) * xx[nn - 2]
+                dx = -(2 * f[nn].l1 - dSec) * dSec * (f[nn].l1 - dSec) / (6 * f[nn].ei1 * f[nn].l1) * xx[nn - 2]
             }
         }
         0 -> { //  # there is a console at the beginning, GENERAL CASE
@@ -446,8 +424,7 @@ private fun makeResultManyFields(x1: Float, n1: Int) {
         else -> { // # an intermediate field, GENERAL CASE
             mx = -(dSec / f[nSec].l1 * xx[nSec - 1] + (f[nSec].l1 - dSec) / f[nSec].l1 * xx[nSec - 2]) // #+M
             qx = (-1 / f[nSec].l1 * xx[nSec - 1] + 1 / f[nSec].l1 * xx[nSec - 2])
-            dx = -(f[nSec].l1 - dSec) * dSec * (f[nSec].l1 + dSec) / (6 * f[nSec].ei1 * f[nSec].l1) * xx[
-                    nSec - 1] - (2 * f[nSec].l1 - dSec) * dSec * (f[nSec].l1 - dSec) / (6 * f[nSec].ei1 * f[nSec].l1) * xx[nSec - 2]
+            dx = -(f[nSec].l1 - dSec) * dSec * (f[nSec].l1 + dSec) / (6 * f[nSec].ei1 * f[nSec].l1) * xx[nSec - 1] - (2 * f[nSec].l1 - dSec) * dSec * (f[nSec].l1 - dSec) / (6 * f[nSec].ei1 * f[nSec].l1) * xx[nSec - 2]
         }
     }
     makeM0(x1, n1,
@@ -533,26 +510,22 @@ private fun makeM0(
             if (dSec >= x1) {
                 mx = -x1 + dSec
                 qx = -1f
-                dx = (-((f[0].l1 - x1) * (f[0].l1 - dSec) * f[1].l1 / (3 * f[1].ei1)
-                        + ((f[0].l1 - x1) * 0.5 - (f[0].l1 - dSec) / 6) * (f[0].l1 - dSec).pow(2) / f[0].ei1)).toFloat()
+                dx = (-((f[0].l1 - x1) * (f[0].l1 - dSec) * f[1].l1 / (3 * f[1].ei1) + ((f[0].l1 - x1) * 0.5 - (f[0].l1 - dSec) / 6) * (f[0].l1 - dSec).pow(2) / f[0].ei1)).toFloat()
             } else {
                 mx = 0f
                 qx = 0f
-                dx = (-((f[0].l1 - x1) * (f[0].l1 - dSec) * f[1].l1 / (3 * f[1].ei1)
-                        + ((f[0].l1 - x1) * (f[0].l1 - dSec) * 0.5 - (f[0].l1 - x1).pow(2) / 6) * (f[0].l1 - x1) / f[0].ei1)).toFloat()
+                dx = (-((f[0].l1 - x1) * (f[0].l1 - dSec) * f[1].l1 / (3 * f[1].ei1) + ((f[0].l1 - x1) * (f[0].l1 - dSec) * 0.5 - (f[0].l1 - x1).pow(2) / 6) * (f[0].l1 - x1) / f[0].ei1)).toFloat()
             }
         }
         else if (n1 == nn + 1) {  //   # there is a console at the end
             if (x1 > dSec) {
                 mx = x1 - dSec
                 qx = 1f
-                dx = -x1 * dSec * f[nn].l1 / (3 * f[nn].ei1)
-                -(x1 * 0.5 - dSec / 6) * dSec.pow(2) / f[nn + 1].ei1
+                dx = (-x1 * dSec * f[nn].l1 / (3 * f[nn].ei1)-(x1 * 0.5 - dSec / 6) * dSec.pow(2) / f[nn + 1].ei1).toFloat()
             } else {  //# x1 < d_sec
                 mx = 0f
                 qx = 0f
-                dx =
-                    (-x1 * dSec * f[nn].l1 / (3 * f[nn].ei1) - (x1 * dSec * 0.5 - x1.pow(2) / 6) * x1 / f[nn + 1].ei1).toFloat()
+                dx = (-x1 * dSec * f[nn].l1 / (3 * f[nn].ei1) - (x1 * dSec * 0.5 - x1.pow(2) / 6) * x1 / f[nn + 1].ei1).toFloat()
             }
         }
         else {  //# there is an intermediate field, GENERAL CASE
@@ -560,10 +533,7 @@ private fun makeM0(
                 mx -= (x1 * (f[nSec].l1 - x1) / f[nSec].l1) * (f[nSec].l1 - dSec) / (f[nSec].l1 - x1)
                 qx += x1 / f[nSec].l1
                 b1 = f[nSec].l1 - x1
-                dx =
-                    dx - b1 * dSec / (6 * f[nSec].ei1 * f[nSec].l1) * (f[nSec].l1.pow(2) - b1.pow(
-                        2
-                    ) - dSec.pow(2)) - (dSec - x1).pow(3) / (6 * f[nSec].ei1)
+                dx = dx - b1 * dSec / (6 * f[nSec].ei1 * f[nSec].l1) * (f[nSec].l1.pow(2) - b1.pow(2) - dSec.pow(2)) - (dSec - x1).pow(3) / (6 * f[nSec].ei1)
             } else {//  # x1 > d_sec
                 if ((x1 == 0f) and (n1 != 0)) {
                     mx = 0f
@@ -573,9 +543,7 @@ private fun makeM0(
                     mx -= (x1 * (f[nSec].l1 - x1) / f[nSec].l1) * dSec / x1
                     qx -= (f[nSec].l1 - x1) / f[nSec].l1
                     b1 = f[nSec].l1 - x1
-                    dx -= b1 * dSec / (6 * f[nSec].ei1 * f[nSec].l1) * (f[nSec].l1.pow(2) - b1.pow(
-                        2
-                    ) - dSec.pow(2))
+                    dx -= b1 * dSec / (6 * f[nSec].ei1 * f[nSec].l1) * (f[nSec].l1.pow(2) - b1.pow(2) - dSec.pow(2))
                 }
             }
         }
@@ -584,8 +552,7 @@ private fun makeM0(
         //# + M0 2
         // # the first field
     if ((nSec == 0) and (n1 == 1) and (nn != 1)){
-        dx += (2 * f[1].l1 - x1) * x1 * (f[1].l1 - x1) * (f[0].l1 - dSec) / (
-                6 * f[1].l1 * f[1].ei1)
+        dx += (2 * f[1].l1 - x1) * x1 * (f[1].l1 - x1) * (f[0].l1 - dSec) / (6 * f[1].l1 * f[1].ei1)
         }
     if ((nSec == nn + 1) and (n1 == nn) and (nn != 1)) {
         dx += (f[nn].l1 + x1) * x1 * (f[nn].l1 - x1) * dSec / (6 * f[nn].l1 * f[nn].ei1)
@@ -892,16 +859,24 @@ class MainActivity : AppCompatActivity() {
                 } catch (exception: NumberFormatException) {
                     EIInput[0].error = getString(R.string.wrong)
                 }
-                NumbersOfTextView[0].isEnabled = true
+                NumbersOfTextView[1].isEnabled = true
                 LengthsInput[0].isEnabled = true
                 EIInput[0].isEnabled = true
+                ResultAreaPlus[0].isEnabled = true
+                ResultAreaMinus[0].isEnabled = true
+                ResultOrdinatePlus[0].isEnabled = true
+                ResultOrdinateMinus[0].isEnabled = true
                 arrayOfNumbersFields.add(0, 0)
                 drawAll()
             } else {
-                NumbersOfTextView[0].isEnabled = false
+                NumbersOfTextView[1].isEnabled = false
                 firstConsoleIsUsed = false
                 LengthsInput[0].isEnabled = false
                 EIInput[0].isEnabled = false
+                ResultAreaPlus[0].isEnabled = false
+                ResultAreaMinus[0].isEnabled = false
+                ResultOrdinatePlus[0].isEnabled = false
+                ResultOrdinateMinus[0].isEnabled = false
                 arrayOfNumbersFields.removeAt(0)
                 if (fieldOfTheSection == 0) {
                     fieldOfTheSection = 1
@@ -959,14 +934,24 @@ class MainActivity : AppCompatActivity() {
                 if ((l > 0) and (l0 > 0) and (EI > 0)) {
                     f.add(MyField(l, l0, EI, numberOfFields + 1))
                 }
+                NumbersOfTextView[numberOfFields + 2].isEnabled = true
                 LengthsInput[numberOfFields + 1].isEnabled = true
                 EIInput[numberOfFields + 1].isEnabled = true
+                ResultAreaPlus[numberOfFields + 1].isEnabled = true
+                ResultAreaMinus[numberOfFields + 1].isEnabled = true
+                ResultOrdinatePlus[numberOfFields + 1].isEnabled = true
+                ResultOrdinateMinus[numberOfFields + 1].isEnabled = true
                 arrayOfNumbersFields.add(numberOfFields + 1)
                 drawAll()
             } else {
                 lastConsoleIsUsed = false
+                NumbersOfTextView[numberOfFields + 2].isEnabled = false
                 LengthsInput[numberOfFields + 1].isEnabled = false
                 EIInput[numberOfFields + 1].isEnabled = false
+                ResultAreaPlus[numberOfFields + 1].isEnabled = false
+                ResultAreaMinus[numberOfFields + 1].isEnabled = false
+                ResultOrdinatePlus[numberOfFields + 1].isEnabled = false
+                ResultOrdinateMinus[numberOfFields + 1].isEnabled = false
                 arrayOfNumbersFields.removeAt(numberOfFields)
                 if (fieldOfTheSection == numberOfFields + 1) {
                     fieldOfTheSection = numberOfFields
@@ -1786,7 +1771,7 @@ class MainActivity : AppCompatActivity() {
             LengthsInput[unEnableNumberOfField].isEnabled = false
             EIInput[unEnableNumberOfField].isEnabled = false
             if (checkSprings.isChecked) {
-                SpringInput[numberOfFields].isEnabled = false
+                SpringInput[numberOfFields + 1].isEnabled = false
             }
             CheckBoxDrawCurve[numberOfFields + 4].isEnabled = false
             ResultAreaPlus[unEnableNumberOfField].isEnabled = false
