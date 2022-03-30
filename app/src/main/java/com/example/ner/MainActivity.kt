@@ -1,5 +1,7 @@
 package com.example.ner
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.content.res.Resources
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
@@ -32,6 +34,8 @@ var lastNumber: Int = 3
 var k_ber: ArrayList<Float> = arrayListOf(0f, 0f, 0f, 0f)
 var xx: FloatArray = FloatArray(0)
 var areSpringsUsed: Boolean = false
+
+var textToShare: String = ""
 
 // coordinate for all cases
 var xg: ArrayList<Float> = ArrayList()
@@ -438,10 +442,10 @@ private fun makeResultOneField(x1: Float, n1: Int) {
     val n0: Int = if (firstConsoleIsUsed) 0 else 1
     val n2: Int = if (lastConsoleIsUsed) 1 else 0
     val dSec: Float = distanceToSection
-    var mx: Float = 0f
-    var qx: Float = 0f
-    var dx: Float = 0f
-    val rx: FloatArray = FloatArray(nn+1)       // coefficients for bearings
+    var mx = 0f
+    var qx = 0f
+    var dx= 0f
+    val rx = FloatArray(nn+1)       // coefficients for bearings
 
     if ((n1 == 0) and (nSec == 1)) {
         //# the last is on the console at the beginning
@@ -753,12 +757,29 @@ class MainActivity : AppCompatActivity() {
         minField()
         drawAllFields()
         makeAllTables()
+        makeTestOfAllDate()
     }
 
 
+    private fun makeTestOfAllDate() {
+        textToShare = "x; M; Q; d; "
+
+        for (i in 0..numberOfFields) {
+            textToShare += "R$i; "
+        }
+        textToShare += '\u000A'
+        for (line in 0 until xg.size) {
+            textToShare += xg[line].toString() + "; " + mg[line].toString() + "; " + qg[line].toString() + "; " + dg[line].toString() + "; "
+            for (i in 0..numberOfFields) {
+                textToShare += rg[i][line].toString() + "; "
+            }
+            textToShare += '\u000A'
+        }
+    }
+
     private fun makeAllTables() {
         clearTable()
-        var ii1: Int = 0  //# make the tables
+        var ii1 = 0  //# make the tables
         val n0: Int = if (firstConsoleIsUsed) 0 else 1
         val n2: Int = if (lastConsoleIsUsed) 1 else 0
         ii1 = table(n0, ii1)
@@ -1801,7 +1822,29 @@ class MainActivity : AppCompatActivity() {
     private fun sendFunctionToButtons() {
         plusButton()
         minusButton()
+        shareButton()
     }
+
+
+    private fun shareButton() {
+        binding.shareTheData?.setOnClickListener {
+            // intent to share
+            val sendIntent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_TEXT, textToShare) // my text to share
+                type = "text/plain" // specify type of intent
+            }
+            try {
+                startActivity(sendIntent)
+            } catch (e: ActivityNotFoundException) {
+
+            }
+            //create a choose, from which app is to be shared
+            //val chosser = Intent.createChooser(intent, "Share using...")
+            //startActivity(chosser)
+        }
+    }
+
 
     private fun drawAGraphListener(index: Int) {
         for (i in CheckBoxDrawCurve) {
@@ -1980,18 +2023,18 @@ class MainActivity : AppCompatActivity() {
         var ii: Int = newNumber
         var maxM: Float = mg[ii]
         var minM: Float  = mg[ii]
-        var amP: Float  = 0f
-        var amM: Float  = 0f
+        var amP  = 0f
+        var amM  = 0f
 
         var maxQ: Float = qg[ii]
         var minQ: Float = qg[ii]
-        var aqP: Float = 0f
-        var aqM: Float = 0f
+        var aqP = 0f
+        var aqM = 0f
 
         var maxD: Float = dg[ii]
         var minD: Float = dg[ii]
-        var adP: Float = 0f
-        var adM: Float = 0f
+        var adP = 0f
+        var adM = 0f
 
         val maxR: ArrayList<Float> = ArrayList()
         val minR: ArrayList<Float> = ArrayList()
